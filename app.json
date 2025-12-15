@@ -14,8 +14,7 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Shepot needs access to your photos to share images in chats",
         "NSCameraUsageDescription": "Shepot needs access to your camera to take photos",
-        "NSMicrophoneUsageDescription": "Shepot needs access to your microphone to record voice messages",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSMicrophoneUsageDescription": "Shepot needs access to your microphone to record voice messages"
       }
     },
     "android": {
