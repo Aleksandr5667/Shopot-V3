@@ -94,3 +94,6 @@ EXPO_OFFLINE = "1"
 
 [userenv.development]
 EXPO_PUBLIC_API_URL = "https://f4af24fb-cd41-411a-ab3b-62b55e6eef87-00-31pjymdxs0z8o.janeway.replit.dev"
+
+[userenv.production]
+EXPO_PUBLIC_API_URL = "https://shopot-api-v-3--admin5460.replit.app"
