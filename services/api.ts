@@ -157,7 +157,7 @@ class ApiService {
     email: string,
     password: string,
     displayName: string
-  ): Promise<ApiResponse<AuthResponse>> {
+  ): Promise<ApiResponse<{ message: string }>> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
@@ -168,11 +168,9 @@ class ApiService {
       const responseData = await response.json();
       console.log("[API] register response:", response.status, responseData);
 
-      if (response.ok && responseData.success && responseData.data) {
-        const authData = responseData.data;
-        await this.setToken(authData.token);
-        console.log("[API] Registration successful, token saved");
-        return { success: true, data: authData };
+      if (response.ok && responseData.success) {
+        console.log("[API] Registration successful, verification code sent");
+        return { success: true, data: { message: responseData.message || "Verification code sent" } };
       }
 
       return { success: false, error: responseData.error || "Registration failed" };
@@ -919,7 +917,7 @@ class ApiService {
     }
   }
 
-  async verifyEmail(email: string, code: string): Promise<ApiResponse<{ message: string }>> {
+  async verifyEmail(email: string, code: string): Promise<ApiResponse<AuthResponse>> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/verify-email`, {
         method: "POST",
@@ -928,9 +926,15 @@ class ApiService {
       });
 
       const responseData = await response.json();
+      console.log("[API] verifyEmail response:", response.status, responseData);
 
-      if (response.ok && responseData.success) {
-        return { success: true, data: { message: responseData.message || "Email verified" } };
+      if (response.ok && responseData.success && responseData.data) {
+        const authData = responseData.data;
+        if (authData.token) {
+          await this.setToken(authData.token);
+          console.log("[API] Email verified, token saved");
+        }
+        return { success: true, data: authData };
       }
 
       return { success: false, error: responseData.error || "Invalid verification code" };

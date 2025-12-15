@@ -8,6 +8,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
 import { apiService } from "@/services/api";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -19,6 +20,7 @@ type EmailVerificationScreenProps = {
 export default function EmailVerificationScreen({ navigation, route }: EmailVerificationScreenProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const { setUserFromVerification } = useAuth();
   const { email } = route.params;
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -90,11 +92,17 @@ export default function EmailVerificationScreen({ navigation, route }: EmailVeri
     try {
       const result = await apiService.verifyEmail(email, codeString);
 
-      if (result.success) {
+      if (result.success && result.data) {
         setSuccess(true);
-        setTimeout(() => {
-          navigation.navigate("SignIn");
-        }, 2000);
+        if (result.data.token && result.data.user) {
+          setTimeout(() => {
+            setUserFromVerification(result.data!.user, result.data!.token);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            navigation.navigate("SignIn");
+          }, 2000);
+        }
       } else {
         setError(result.error || t("errors.somethingWentWrong"));
       }

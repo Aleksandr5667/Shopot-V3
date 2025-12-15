@@ -23,6 +23,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  setUserFromVerification: (serverUser: ServerUser, token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,8 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const result = await apiService.register(email, password, displayName);
         
-        if (result.success && result.data) {
-          setUser(serverUserToUser(result.data.user));
+        if (result.success) {
           return { success: true };
         }
         
@@ -110,6 +110,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     []
   );
+
+  const setUserFromVerification = useCallback((serverUser: ServerUser, token: string) => {
+    apiService.setToken(token);
+    setUser(serverUserToUser(serverUser));
+  }, []);
 
   const signOut = useCallback(async () => {
     try {
@@ -174,6 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut,
         updateUser,
         deleteAccount,
+        setUserFromVerification,
       }}
     >
       {children}
