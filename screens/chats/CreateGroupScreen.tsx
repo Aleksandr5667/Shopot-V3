@@ -572,6 +572,11 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 2,
+    elevation: 3,
   },
   loadingMore: {
     paddingVertical: Spacing.md,
