@@ -500,7 +500,7 @@ export function MessageInput({
                 sendButtonAnimatedStyle,
               ]}
             >
-              <Feather name={isEditing ? "check" : "arrow-up"} size={20} color="#FFFFFF" />
+              <Feather name={isEditing ? "check" : "send"} size={20} color="#FFFFFF" />
             </AnimatedPressable>
           </Animated.View>
         </View>
