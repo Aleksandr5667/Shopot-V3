@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.shepot.app",
-      "versionCode": 9,
+      "versionCode": 10,
       "adaptiveIcon": {
         "backgroundColor": "#0088CC",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
