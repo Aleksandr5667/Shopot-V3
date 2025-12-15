@@ -65,7 +65,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     >
       <Feather
         name={item.icon as any}
-        size={22}
+        size={24}
         color={isActive ? theme.primary : theme.text}
       />
       <ThemedText

@@ -26,7 +26,7 @@ export const createBackButton = (
     })}
     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
   >
-    <Feather name="chevron-left" size={28} color={color} />
+    <Feather name="chevron-left" size={24} color={color} />
   </Pressable>
 );
 
