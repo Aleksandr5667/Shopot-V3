@@ -89,6 +89,8 @@ value = "0"
 [userenv]
 
 [userenv.shared]
-EXPO_PUBLIC_API_URL = "https://404e34a7-9d2b-4aa2-aa6d-d87919f2f7d8-00-37obk224domgg.riker.replit.dev"
 EXPO_NO_INTERACTIVE_LOGIN = "1"
 EXPO_OFFLINE = "1"
+
+[userenv.development]
+EXPO_PUBLIC_API_URL = "https://f4af24fb-cd41-411a-ab3b-62b55e6eef87-00-31pjymdxs0z8o.janeway.replit.dev"

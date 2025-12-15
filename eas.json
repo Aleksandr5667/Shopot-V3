@@ -7,7 +7,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-2--x-track89.replit.app"
+        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-3--admin5460.replit.app"
       }
     },
     "preview": {
@@ -16,7 +16,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-2--x-track89.replit.app"
+        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-3--admin5460.replit.app"
       }
     },
     "production": {
@@ -27,7 +27,7 @@
         "distribution": "store"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-2--x-track89.replit.app"
+        "EXPO_PUBLIC_API_URL": "https://shopot-api-v-3--admin5460.replit.app"
       }
     }
   },
