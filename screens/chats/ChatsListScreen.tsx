@@ -305,20 +305,6 @@ export default function ChatsListScreen() {
           ) : null}
         />
       )}
-
-      <Pressable
-        onPress={() => navigation.navigate("AddContact")}
-        style={({ pressed }) => [
-          styles.fab,
-          { 
-            backgroundColor: theme.primary,
-            bottom: Math.max(insets.bottom, Spacing.lg) + Spacing.lg,
-          },
-          pressed ? { opacity: 0.8 } : {},
-        ]}
-      >
-        <Feather name="edit" size={24} color="#FFFFFF" />
-      </Pressable>
     </View>
   );
 }
@@ -363,19 +349,5 @@ const styles = StyleSheet.create({
   loadingMore: {
     paddingVertical: Spacing.md,
     alignItems: "center",
-  },
-  fab: {
-    position: "absolute",
-    right: Spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 2,
-    elevation: 3,
   },
 });
