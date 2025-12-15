@@ -27,16 +27,16 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const getThemeLabel = (mode: ThemeMode) => {
     switch (mode) {
-      case "system": return t("settings.system");
+      case "system": return t("settings.light");
       case "light": return t("settings.light");
       case "dark": return t("settings.dark");
     }
   };
 
   const handleThemeChange = () => {
-    const modes: ThemeMode[] = ["system", "light", "dark"];
+    const modes: ThemeMode[] = ["light", "dark"];
     const currentIndex = modes.indexOf(themeMode);
-    const nextIndex = (currentIndex + 1) % modes.length;
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % modes.length;
     setThemeMode(modes[nextIndex]);
   };
 

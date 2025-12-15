@@ -392,13 +392,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     const textToCopy = message.text || "";
     if (textToCopy) {
       await Clipboard.setStringAsync(textToCopy);
-      if (Platform.OS === "web") {
-        window.alert(t("chat.copied"));
-      } else {
-        Alert.alert("", t("chat.copied"));
-      }
     }
-  }, [t]);
+  }, []);
 
   const handleForwardMessage = useCallback((message: Message) => {
     const messageType = message.type || "text";

@@ -443,7 +443,7 @@ export function MessageInput({
                 { opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <Feather name="plus-circle" size={24} color={theme.primary} />
+              <Feather name="paperclip" size={24} color={theme.primary} />
             </Pressable>
           )}
 
