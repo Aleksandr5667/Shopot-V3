@@ -186,7 +186,7 @@ export default function SettingsScreen({ navigation }: Props) {
         <SettingsItem
           icon="code"
           label={t("settings.version")}
-          value="1.2.0"
+          value="1.2.1"
         />
         <SettingsItem
           icon="shield"

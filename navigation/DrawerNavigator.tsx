@@ -119,7 +119,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
       <View style={styles.footer}>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          Шёпот v1.2.0
+          Шёпот v1.2.1
         </ThemedText>
       </View>
     </DrawerContentScrollView>
