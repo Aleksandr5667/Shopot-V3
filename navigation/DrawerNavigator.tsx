@@ -117,11 +117,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         })}
       </View>
 
-      <View style={styles.footer}>
-        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          Шёпот v1.2.1
-        </ThemedText>
-      </View>
     </DrawerContentScrollView>
   );
 }
@@ -184,9 +179,5 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
     fontSize: 16,
     fontWeight: "500",
-  },
-  footer: {
-    paddingVertical: Spacing.xl,
-    alignItems: "center",
   },
 });
