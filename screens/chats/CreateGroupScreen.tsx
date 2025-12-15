@@ -5,7 +5,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HeaderButton } from "@react-navigation/elements";
 import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -70,20 +69,32 @@ export function CreateGroupScreen() {
     navigation.setOptions({
       title: t("chats.createGroup"),
       headerRight: () => (
-        <HeaderButton
+        <Pressable
           onPress={createGroup}
           disabled={!canCreate || isCreating}
+          style={({ pressed }) => [
+            {
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: canCreate ? theme.primary : theme.divider,
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: Spacing.sm,
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
         >
           {isCreating ? (
-            <ActivityIndicator size="small" color={theme.primary} />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Feather 
               name="check" 
-              size={24} 
-              color={canCreate ? theme.primary : theme.textSecondary} 
+              size={20} 
+              color={canCreate ? "#FFFFFF" : theme.textSecondary} 
             />
           )}
-        </HeaderButton>
+        </Pressable>
       ),
     });
   }, [navigation, t, canCreate, isCreating, createGroup, theme]);
@@ -361,27 +372,6 @@ export function CreateGroupScreen() {
           )}
         </View>
       </View>
-
-      {canCreate ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.createButton,
-            { 
-              backgroundColor: isCreating ? theme.textSecondary : theme.primary,
-              bottom: Math.max(insets.bottom, Spacing.lg) + Spacing.lg,
-            },
-            pressed ? { opacity: 0.8 } : {},
-          ]}
-          onPress={createGroup}
-          disabled={isCreating}
-        >
-          {isCreating ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Feather name="check" size={24} color="#FFFFFF" />
-          )}
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -563,20 +553,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-  },
-  createButton: {
-    position: "absolute",
-    right: Spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 2,
-    elevation: 3,
   },
   loadingMore: {
     paddingVertical: Spacing.md,
