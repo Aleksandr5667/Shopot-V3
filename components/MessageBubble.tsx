@@ -560,7 +560,7 @@ export function MessageBubble({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    marginVertical: 4,
+    marginVertical: 2,
   },
   bubble: {
     maxWidth: MAX_BUBBLE_WIDTH,
