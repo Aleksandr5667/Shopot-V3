@@ -33,6 +33,7 @@ const loadedMediaCache = new Set<string>();
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
+  isGroup?: boolean;
   onMediaPress?: () => void;
   onLongPress?: () => void;
   onRetry?: () => void;
@@ -120,6 +121,7 @@ function UploadProgressOverlay({ progress, hasError, mediaType = "image", upload
 export function MessageBubble({
   message,
   isOwn,
+  isGroup,
   onMediaPress,
   onLongPress,
   onRetry,
@@ -551,6 +553,8 @@ export function MessageBubble({
     );
   };
 
+  const showSenderName = isGroup && !isOwn && message.senderName;
+
   return (
     <Animated.View 
       style={[
@@ -560,6 +564,17 @@ export function MessageBubble({
         highlightStyle
       ]}
     >
+      {showSenderName ? (
+        <ThemedText 
+          style={[
+            styles.senderName, 
+            { color: message.senderColor || theme.primary }
+          ]}
+          numberOfLines={1}
+        >
+          {message.senderName}
+        </ThemedText>
+      ) : null}
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={pressAnimStyle}>
           {renderBubbleContent()}
@@ -573,6 +588,13 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
     marginVertical: 2,
+  },
+  senderName: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 2,
+    marginLeft: 2,
+    maxWidth: MAX_BUBBLE_WIDTH,
   },
   bubble: {
     maxWidth: MAX_BUBBLE_WIDTH,
