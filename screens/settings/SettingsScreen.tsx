@@ -195,14 +195,9 @@ export default function SettingsScreen({ navigation }: Props) {
           <View style={styles.donationIconContainer}>
             <Feather name="heart" size={28} color="#FFFFFF" />
           </View>
-          <View style={styles.donationTextContainer}>
-            <ThemedText type="h4" style={styles.donationTitle}>
-              {t("settings.supportProject")}
-            </ThemedText>
-            <ThemedText type="small" style={styles.donationDescription}>
-              {t("settings.supportDescription")}
-            </ThemedText>
-          </View>
+          <ThemedText type="h4" style={styles.donationTitle}>
+            {t("settings.supportProject")}
+          </ThemedText>
           <Feather name="external-link" size={20} color="rgba(255,255,255,0.8)" />
         </View>
       </Pressable>
@@ -285,17 +280,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: Spacing.md,
   },
-  donationTextContainer: {
-    flex: 1,
-  },
   donationTitle: {
+    flex: 1,
     color: "#FFFFFF",
     fontWeight: "700",
-    marginBottom: 4,
-  },
-  donationDescription: {
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 18,
   },
   profileGradient: {
     position: "absolute",
