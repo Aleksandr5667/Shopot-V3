@@ -645,8 +645,8 @@ export default function ChatScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 24}
     >
       {isSearchMode ? (
         <View style={[styles.searchPanel, { backgroundColor: theme.backgroundSecondary, borderBottomColor: theme.inputBorder }]}>

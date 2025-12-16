@@ -77,6 +77,13 @@
         {
           "microphonePermission": "Shepot needs access to your microphone to record voice messages"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#0088CC"
+        }
       ]
     ],
     "experiments": {

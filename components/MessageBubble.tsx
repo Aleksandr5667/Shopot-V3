@@ -318,17 +318,29 @@ export function MessageBubble({
               styles.quotedMessage, 
               { 
                 backgroundColor: isOwn 
-                  ? (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.06)") 
-                  : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"),
+                  ? (isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.05)") 
+                  : (isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)"),
               }
             ]}
           >
             <View style={[styles.quotedBar, { backgroundColor: isOwn ? (isDark ? "#FFFFFF" : theme.primary) : theme.primary }]} />
             <View style={styles.quotedContent}>
-              <ThemedText style={[styles.quotedName, { color: isOwn ? (isDark ? "rgba(255,255,255,0.9)" : theme.primary) : theme.primary }]} numberOfLines={1}>
+              <ThemedText 
+                style={[
+                  styles.quotedName, 
+                  { color: isOwn ? (isDark ? "rgba(255,255,255,0.9)" : theme.primary) : theme.primary }
+                ]} 
+                numberOfLines={1}
+              >
                 {message.replyToMessage.senderName}
               </ThemedText>
-              <ThemedText style={[styles.quotedText, { color: isOwn ? (isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.55)") : theme.textSecondary }]} numberOfLines={2}>
+              <ThemedText 
+                style={[
+                  styles.quotedText, 
+                  { color: isOwn ? (isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.5)") : theme.textSecondary }
+                ]} 
+                numberOfLines={3}
+              >
                 {message.replyToMessage.type === "image" ? t("chat.photo") : 
                  message.replyToMessage.type === "video" ? t("chat.video") :
                  message.replyToMessage.type === "voice" ? t("chat.voiceMessage") :
@@ -669,28 +681,32 @@ const styles = StyleSheet.create({
   },
   quotedMessage: {
     flexDirection: "row",
-    marginBottom: 8,
-    paddingVertical: 8,
-    paddingRight: 12,
-    borderRadius: 10,
+    marginBottom: 10,
+    paddingVertical: 10,
+    paddingRight: 14,
+    paddingLeft: 4,
+    borderRadius: 12,
     overflow: "hidden",
+    minWidth: 140,
   },
   quotedBar: {
     width: 3,
-    borderRadius: 2,
+    borderRadius: 1.5,
     marginRight: 10,
+    alignSelf: "stretch",
   },
   quotedContent: {
     flex: 1,
+    minWidth: 0,
   },
   quotedName: {
     fontSize: 13,
     fontWeight: "600",
-    marginBottom: 2,
+    marginBottom: 3,
   },
   quotedText: {
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   expandButton: {
     marginTop: 6,
