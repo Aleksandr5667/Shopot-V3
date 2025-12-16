@@ -1268,6 +1268,8 @@ class ApiService {
       id: serverMessage.id.toString(),
       chatId: serverMessage.chatId.toString(),
       senderId: serverMessage.senderId.toString(),
+      senderName: serverMessage.sender?.displayName,
+      senderColor: serverMessage.sender?.avatarColor,
       text: serverMessage.content,
       timestamp: serverMessage.createdAt,
       status,

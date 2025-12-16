@@ -53,6 +53,8 @@ export interface Message {
   tempId?: string;
   chatId: string;
   senderId: string;
+  senderName?: string;
+  senderColor?: string;
   text?: string;
   type?: "text" | "image" | "video" | "voice" | "system";
   mediaType?: "photo" | "video" | "audio";
