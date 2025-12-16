@@ -178,29 +178,40 @@ export default function SettingsScreen({ navigation }: Props) {
         />
       </SettingsSection>
 
-      <Pressable
-        onPress={() => WebBrowser.openBrowserAsync("https://www.donationalerts.com/r/aleksandr_fedorina")}
-        style={({ pressed }) => [
-          styles.donationCard,
-          pressed ? { opacity: 0.9, transform: [{ scale: 0.98 }] } : {},
-        ]}
-      >
-        <LinearGradient
-          colors={["#E8A0BF", "#F2C4D0", "#F9DDE5"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.donationGradient}
-        />
-        <View style={styles.donationContent}>
-          <View style={styles.donationIconContainer}>
-            <Feather name="heart" size={28} color="#FFFFFF" />
+      <View style={styles.donationWrapper}>
+        <Pressable
+          onPress={() => WebBrowser.openBrowserAsync("https://www.donationalerts.com/r/aleksandr_fedorina")}
+          style={({ pressed }) => [
+            styles.donationCard,
+            isDark ? CardStyles.dark : CardStyles.light,
+            pressed ? { opacity: 0.8 } : {},
+          ]}
+        >
+          {Platform.OS === "ios" ? (
+            <BlurView
+              intensity={isDark ? 15 : 30}
+              tint={isDark ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: isDark ? "rgba(30,32,34,0.97)" : "rgba(255,255,255,0.95)" },
+              ]}
+            />
+          )}
+          <View style={styles.donationContent}>
+            <View style={[styles.donationIconContainer, { backgroundColor: "#FF6B6B20" }]}>
+              <Feather name="heart" size={20} color="#FF6B6B" />
+            </View>
+            <ThemedText style={[styles.donationTitle, { color: theme.text }]}>
+              {t("settings.supportProject")}
+            </ThemedText>
+            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
           </View>
-          <ThemedText type="h4" style={styles.donationTitle}>
-            {t("settings.supportProject")}
-          </ThemedText>
-          <Feather name="external-link" size={20} color="rgba(255,255,255,0.8)" />
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
 
       <SettingsSection title={t("settings.about")}>
         <SettingsItem
@@ -252,38 +263,32 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing["2xl"],
   },
-  donationCard: {
+  donationWrapper: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
-    borderRadius: BorderRadius.md,
-    overflow: "hidden",
-    shadowColor: "#E8A0BF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
   },
-  donationGradient: {
-    ...StyleSheet.absoluteFillObject,
+  donationCard: {
+    borderRadius: BorderRadius.sm,
+    overflow: "hidden",
   },
   donationContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    minHeight: 52,
   },
   donationIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.xs,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.md,
   },
   donationTitle: {
     flex: 1,
-    color: "#FFFFFF",
-    fontWeight: "700",
+    fontSize: 16,
   },
   profileGradient: {
     position: "absolute",
