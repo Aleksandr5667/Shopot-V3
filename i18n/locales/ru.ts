@@ -158,6 +158,8 @@ export default {
     help: "Помощь и поддержка",
     about: "О приложении",
     version: "Версия",
+    supportProject: "Поддержать проект",
+    supportDescription: "Для поддержания серверов и развития проекта",
     logout: "Выйти",
     logoutConfirm: "Вы уверены, что хотите выйти?",
     deleteAccount: "Удалить аккаунт",

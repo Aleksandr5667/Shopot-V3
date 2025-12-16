@@ -158,6 +158,8 @@ export default {
     help: "Help & Support",
     about: "About Shepot",
     version: "Version",
+    supportProject: "Support the Project",
+    supportDescription: "Help keep the servers running and support development",
     logout: "Log Out",
     logoutConfirm: "Are you sure you want to log out?",
     deleteAccount: "Delete Account",

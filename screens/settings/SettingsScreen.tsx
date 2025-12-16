@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import { SettingsStackParamList } from "@/navigation/types";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { Avatar } from "@/components/Avatar";
@@ -174,6 +175,15 @@ export default function SettingsScreen({ navigation }: Props) {
           label={t("settings.theme")}
           value={getThemeLabel(themeMode)}
           onPress={handleThemeChange}
+        />
+      </SettingsSection>
+
+      <SettingsSection title={t("settings.supportProject")}>
+        <SettingsItem
+          icon="heart"
+          label={t("settings.supportProject")}
+          value={t("settings.supportDescription")}
+          onPress={() => WebBrowser.openBrowserAsync("https://www.donationalerts.com/r/aleksandr_fedorina")}
         />
       </SettingsSection>
 
