@@ -142,6 +142,8 @@ export default {
     selectChat: "Select chat",
     messageForwarded: "Message forwarded",
     forwardTextOnly: "Only text messages can be forwarded",
+    readMore: "Read more",
+    collapse: "Collapse",
   },
   settings: {
     title: "Settings",

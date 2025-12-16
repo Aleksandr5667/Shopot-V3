@@ -55,6 +55,9 @@ const SPRING_CONFIG = {
 const EMOJI_ONLY_REGEX = /^[\p{Emoji_Presentation}\p{Emoji}\uFE0F\p{Emoji_Modifier_Base}\p{Emoji_Modifier}\p{Emoji_Component}\p{Regional_Indicator}\u200D\s]+$/u;
 const EMOJI_COUNT_REGEX = /\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Regional_Indicator}{2}/gu;
 
+const MAX_COLLAPSED_LINES = 15;
+const MAX_COLLAPSED_CHARS = 500;
+
 function isEmojiOnlyMessage(text: string | undefined): boolean {
   if (!text || text.trim().length === 0) return false;
   const trimmed = text.trim();
@@ -136,6 +139,23 @@ export function MessageBubble({
   const isAlreadyKnownLoaded = isOwn || loadedMediaCache.has(mediaKey);
   const [isMediaLoaded, setIsMediaLoaded] = useState(isAlreadyKnownLoaded);
   const [isCheckingCache, setIsCheckingCache] = useState(!isAlreadyKnownLoaded && !!mediaKey);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const isLongMessage = message.text && (
+    message.text.length > MAX_COLLAPSED_CHARS || 
+    message.text.split('\n').length > MAX_COLLAPSED_LINES
+  );
+
+  const getCollapsedText = (text: string): string => {
+    const lines = text.split('\n');
+    if (lines.length > MAX_COLLAPSED_LINES) {
+      return lines.slice(0, MAX_COLLAPSED_LINES).join('\n') + '...';
+    }
+    if (text.length > MAX_COLLAPSED_CHARS) {
+      return text.slice(0, MAX_COLLAPSED_CHARS) + '...';
+    }
+    return text;
+  };
   
   const handleLoadMedia = useCallback(() => {
     if (mediaKey) {
@@ -423,16 +443,36 @@ export function MessageBubble({
               {message.text}
             </ThemedText>
           ) : (
-            <ThemedText
-              type="body"
-              style={[
-                styles.text, 
-                { color: isOwn ? outgoingTextColor : theme.text },
-                Platform.OS === "web" ? { wordBreak: "break-word" } as any : null
-              ]}
-            >
-              {message.text}
-            </ThemedText>
+            <View>
+              <ThemedText
+                type="body"
+                style={[
+                  styles.text, 
+                  { color: isOwn ? outgoingTextColor : theme.text },
+                  Platform.OS === "web" ? { wordBreak: "break-word" } as any : null
+                ]}
+              >
+                {isLongMessage && !isExpanded 
+                  ? getCollapsedText(message.text) 
+                  : message.text}
+              </ThemedText>
+              {isLongMessage ? (
+                <Pressable 
+                  onPress={() => setIsExpanded(!isExpanded)} 
+                  style={styles.expandButton}
+                  hitSlop={8}
+                >
+                  <ThemedText 
+                    style={[
+                      styles.expandButtonText, 
+                      { color: isOwn ? (isDark ? "rgba(255,255,255,0.8)" : theme.primary) : theme.primary }
+                    ]}
+                  >
+                    {isExpanded ? t("chat.collapse") : t("chat.readMore")}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
           )
         ) : null}
 
@@ -651,5 +691,13 @@ const styles = StyleSheet.create({
   quotedText: {
     fontSize: 14,
     lineHeight: 18,
+  },
+  expandButton: {
+    marginTop: 6,
+    paddingVertical: 2,
+  },
+  expandButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });

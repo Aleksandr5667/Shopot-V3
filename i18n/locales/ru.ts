@@ -142,6 +142,8 @@ export default {
     selectChat: "Выберите чат",
     messageForwarded: "Сообщение переслано",
     forwardTextOnly: "Можно пересылать только текстовые сообщения",
+    readMore: "Читать полностью",
+    collapse: "Свернуть",
   },
   settings: {
     title: "Настройки",
