@@ -284,6 +284,8 @@ export function MessageBubble({
     ? 'rgba(58, 58, 60, 0.95)' 
     : 'rgba(255, 255, 255, 0.98)';
 
+  const showSenderName = isGroup && !isOwn && message.senderName;
+
   const renderBubbleContent = () => {
     const bubbleRadius = 22;
     const tailRadius = 4;
@@ -313,6 +315,18 @@ export function MessageBubble({
 
     const innerContent = (
       <>
+        {showSenderName ? (
+          <ThemedText 
+            style={[
+              styles.senderName, 
+              { color: message.senderColor || theme.primary }
+            ]}
+            numberOfLines={1}
+          >
+            {message.senderName}
+          </ThemedText>
+        ) : null}
+
         {message.replyToMessage ? (
           <Pressable 
             onPress={onQuotedMessagePress}
@@ -553,8 +567,6 @@ export function MessageBubble({
     );
   };
 
-  const showSenderName = isGroup && !isOwn && message.senderName;
-
   return (
     <Animated.View 
       style={[
@@ -564,25 +576,6 @@ export function MessageBubble({
         highlightStyle
       ]}
     >
-      {showSenderName ? (
-        <View style={styles.senderNameContainer}>
-          <View 
-            style={[
-              styles.senderNameDot,
-              { backgroundColor: message.senderColor || theme.primary }
-            ]} 
-          />
-          <ThemedText 
-            style={[
-              styles.senderName, 
-              { color: message.senderColor || theme.primary }
-            ]}
-            numberOfLines={1}
-          >
-            {message.senderName}
-          </ThemedText>
-        </View>
-      ) : null}
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={pressAnimStyle}>
           {renderBubbleContent()}
@@ -597,23 +590,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginVertical: 2,
   },
-  senderNameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.xs,
-    marginLeft: 4,
-    maxWidth: MAX_BUBBLE_WIDTH,
-  },
-  senderNameDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
-  },
   senderName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
+    marginBottom: 4,
   },
   bubble: {
     maxWidth: MAX_BUBBLE_WIDTH,
