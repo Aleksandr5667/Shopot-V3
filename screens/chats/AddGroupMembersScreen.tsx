@@ -20,6 +20,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useContacts } from "@/hooks/useChats";
+import { useChatsContext } from "@/contexts/ChatsContext";
 import { apiService } from "@/services/api";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 import { ChatsStackParamList } from "@/navigation/types";
@@ -44,6 +45,7 @@ export function AddGroupMembersScreen() {
   const route = useRoute<AddMembersRouteProp>();
   const insets = useSafeAreaInsets();
   const { contacts, isLoading: isLoadingContacts, isLoadingMore, hasMoreContacts, loadMoreContacts } = useContacts();
+  const { chats } = useChatsContext();
   const { chatId, existingMemberIds } = route.params;
 
   const [selectedUsers, setSelectedUsers] = useState<SearchUser[]>([]);
@@ -60,17 +62,43 @@ export function AddGroupMembersScreen() {
   }, [navigation, t]);
 
   const availableContacts = useMemo((): SearchUser[] => {
-    return contacts
-      .filter((c) => !existingMemberIds.includes(c.visibleId || parseInt(c.id, 10)))
-      .map((c) => ({
-        id: c.id,
-        visibleId: c.visibleId || parseInt(c.id, 10),
-        displayName: c.displayName,
-        email: c.email,
-        avatarColor: c.avatarColor,
-        isFromSearch: false,
-      }));
-  }, [contacts, existingMemberIds]);
+    const combined: SearchUser[] = [];
+    const seenIds = new Set<number>();
+
+    chats.forEach((chat) => {
+      if (!chat.isGroup && chat.participant) {
+        const visibleId = chat.participant.visibleId || parseInt(chat.participant.id, 10);
+        if (!seenIds.has(visibleId) && !existingMemberIds.includes(visibleId)) {
+          seenIds.add(visibleId);
+          combined.push({
+            id: chat.participant.id,
+            visibleId,
+            displayName: chat.participant.displayName,
+            email: chat.participant.email,
+            avatarColor: chat.participant.avatarColor,
+            isFromSearch: false,
+          });
+        }
+      }
+    });
+
+    contacts.forEach((c) => {
+      const visibleId = c.visibleId || parseInt(c.id, 10);
+      if (!seenIds.has(visibleId) && !existingMemberIds.includes(visibleId)) {
+        seenIds.add(visibleId);
+        combined.push({
+          id: c.id,
+          visibleId,
+          displayName: c.displayName,
+          email: c.email,
+          avatarColor: c.avatarColor,
+          isFromSearch: false,
+        });
+      }
+    });
+
+    return combined;
+  }, [chats, contacts, existingMemberIds]);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
