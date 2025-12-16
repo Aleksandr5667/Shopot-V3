@@ -178,14 +178,34 @@ export default function SettingsScreen({ navigation }: Props) {
         />
       </SettingsSection>
 
-      <SettingsSection title={t("settings.supportProject")}>
-        <SettingsItem
-          icon="heart"
-          label={t("settings.supportProject")}
-          value={t("settings.supportDescription")}
-          onPress={() => WebBrowser.openBrowserAsync("https://www.donationalerts.com/r/aleksandr_fedorina")}
+      <Pressable
+        onPress={() => WebBrowser.openBrowserAsync("https://www.donationalerts.com/r/aleksandr_fedorina")}
+        style={({ pressed }) => [
+          styles.donationCard,
+          pressed ? { opacity: 0.9, transform: [{ scale: 0.98 }] } : {},
+        ]}
+      >
+        <LinearGradient
+          colors={["#FF6B6B", "#FF8E8E", "#FFB3B3"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.donationGradient}
         />
-      </SettingsSection>
+        <View style={styles.donationContent}>
+          <View style={styles.donationIconContainer}>
+            <Feather name="heart" size={28} color="#FFFFFF" />
+          </View>
+          <View style={styles.donationTextContainer}>
+            <ThemedText type="h4" style={styles.donationTitle}>
+              {t("settings.supportProject")}
+            </ThemedText>
+            <ThemedText type="small" style={styles.donationDescription}>
+              {t("settings.supportDescription")}
+            </ThemedText>
+          </View>
+          <Feather name="external-link" size={20} color="rgba(255,255,255,0.8)" />
+        </View>
+      </Pressable>
 
       <SettingsSection title={t("settings.about")}>
         <SettingsItem
@@ -236,6 +256,46 @@ const styles = StyleSheet.create({
   profileWrapper: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing["2xl"],
+  },
+  donationCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    shadowColor: "#FF6B6B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  donationGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  donationContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
+  donationIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: Spacing.md,
+  },
+  donationTextContainer: {
+    flex: 1,
+  },
+  donationTitle: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  donationDescription: {
+    color: "rgba(255,255,255,0.9)",
+    lineHeight: 18,
   },
   profileGradient: {
     position: "absolute",
