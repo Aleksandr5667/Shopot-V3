@@ -629,6 +629,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         <MessageBubble
           message={item}
           isOwn={item.senderId === user?.id}
+          isGroup={isGroup}
           onMediaPress={() => handleMediaPress(item)}
           onLongPress={() => handleMessageLongPress(item)}
           onRetry={() => handleRetryMessage(item)}
@@ -639,7 +640,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         />
       );
     },
-    [user?.id, handleMediaPress, handleMessageLongPress, handleRetryMessage, scrollToMessage, highlightedMessageId, renderDateSeparatorComponent, deletingMessageIds, handleDeleteAnimationComplete]
+    [user?.id, isGroup, handleMediaPress, handleMessageLongPress, handleRetryMessage, scrollToMessage, highlightedMessageId, renderDateSeparatorComponent, deletingMessageIds, handleDeleteAnimationComplete]
   );
 
   return (
