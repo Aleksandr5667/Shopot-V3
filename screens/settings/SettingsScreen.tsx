@@ -186,7 +186,7 @@ export default function SettingsScreen({ navigation }: Props) {
         ]}
       >
         <LinearGradient
-          colors={["#FF6B6B", "#FF8E8E", "#FFB3B3"]}
+          colors={["#E8A0BF", "#F2C4D0", "#F9DDE5"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.donationGradient}
@@ -257,11 +257,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     borderRadius: BorderRadius.md,
     overflow: "hidden",
-    shadowColor: "#FF6B6B",
+    shadowColor: "#E8A0BF",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
   donationGradient: {
     ...StyleSheet.absoluteFillObject,
