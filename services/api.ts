@@ -57,6 +57,7 @@ export interface ServerChat {
   maxMembers?: number;
   members: { user: ServerUser; role?: string; joinedAt?: string; addedBy?: number }[];
   lastMessage?: ServerMessage | null;
+  unreadCount?: number;
 }
 
 export interface ServerReplyToMessage {
@@ -1227,7 +1228,7 @@ class ApiService {
       lastMessage: serverChat.lastMessage
         ? this.serverMessageToMessage(serverChat.lastMessage, currentUserId)
         : undefined,
-      unreadCount: 0,
+      unreadCount: serverChat.unreadCount || 0,
       updatedAt: serverChat.lastMessage?.createdAt || serverChat.createdAt,
       avatarColor: serverChat.avatarColor || undefined,
     };
