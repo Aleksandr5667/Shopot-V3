@@ -96,30 +96,51 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
         
         setChats((prevChats) => {
           const onlineStatusMap = new Map<number, boolean>();
+          const unreadCountMap = new Map<string, number>();
+          const lastMessageIdMap = new Map<string, string | undefined>();
+          
           prevChats.forEach((chat) => {
             if (chat.type === "private" && chat.participant?.visibleId !== undefined && chat.participant.isOnline !== undefined) {
               onlineStatusMap.set(chat.participant.visibleId, chat.participant.isOnline);
             }
+            if (chat.unreadCount !== undefined && chat.unreadCount > 0) {
+              unreadCountMap.set(chat.id, chat.unreadCount);
+              lastMessageIdMap.set(chat.id, chat.lastMessage?.id);
+            }
           });
           
-          const chatsWithOnlineStatus = sortedChats.map((chat) => {
+          const chatsWithPreservedState = sortedChats.map((chat) => {
+            let updatedChat = { ...chat };
+            
             if (chat.type === "private" && chat.participant?.visibleId !== undefined) {
               const savedOnlineStatus = onlineStatusMap.get(chat.participant.visibleId);
               if (savedOnlineStatus !== undefined) {
-                return {
-                  ...chat,
+                updatedChat = {
+                  ...updatedChat,
                   participant: {
-                    ...chat.participant,
+                    ...updatedChat.participant!,
                     isOnline: savedOnlineStatus,
                   },
                 };
               }
             }
-            return chat;
+            
+            const cachedUnreadCount = unreadCountMap.get(chat.id);
+            const cachedLastMessageId = lastMessageIdMap.get(chat.id);
+            if (cachedUnreadCount !== undefined && cachedUnreadCount > 0) {
+              if (chat.lastMessage?.id === cachedLastMessageId) {
+                updatedChat.unreadCount = cachedUnreadCount;
+              } else if (chat.lastMessage?.id !== cachedLastMessageId) {
+                const newMessagesCount = 1;
+                updatedChat.unreadCount = cachedUnreadCount + newMessagesCount;
+              }
+            }
+            
+            return updatedChat;
           });
           
-          chatCache.saveChats(chatsWithOnlineStatus);
-          return chatsWithOnlineStatus;
+          chatCache.saveChats(chatsWithPreservedState);
+          return chatsWithPreservedState;
         });
         
         setHasMoreChats(result.data.pageInfo.hasMore);
@@ -146,9 +167,14 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
         
         setChats((prev) => {
           const onlineStatusMap = new Map<number, boolean>();
+          const unreadCountMap = new Map<string, number>();
+          
           prev.forEach((chat) => {
             if (chat.type === "private" && chat.participant?.visibleId !== undefined && chat.participant.isOnline !== undefined) {
               onlineStatusMap.set(chat.participant.visibleId, chat.participant.isOnline);
+            }
+            if (chat.unreadCount !== undefined && chat.unreadCount > 0) {
+              unreadCountMap.set(chat.id, chat.unreadCount);
             }
           });
           
@@ -156,19 +182,27 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
           const newChatsWithStatus = mappedChats
             .filter(c => !existingIds.has(c.id))
             .map((chat) => {
+              let updatedChat = { ...chat };
+              
               if (chat.type === "private" && chat.participant?.visibleId !== undefined) {
                 const savedOnlineStatus = onlineStatusMap.get(chat.participant.visibleId);
                 if (savedOnlineStatus !== undefined) {
-                  return {
-                    ...chat,
+                  updatedChat = {
+                    ...updatedChat,
                     participant: {
-                      ...chat.participant,
+                      ...updatedChat.participant!,
                       isOnline: savedOnlineStatus,
                     },
                   };
                 }
               }
-              return chat;
+              
+              const cachedUnreadCount = unreadCountMap.get(chat.id);
+              if (cachedUnreadCount !== undefined && cachedUnreadCount > 0) {
+                updatedChat.unreadCount = cachedUnreadCount;
+              }
+              
+              return updatedChat;
             });
           const merged = [...prev, ...newChatsWithStatus];
           chatCache.saveChats(merged);
