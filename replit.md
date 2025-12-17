@@ -30,6 +30,7 @@ The application is built with React Native and Expo, utilizing a component-based
 - **Performance**: Throttled typing indicators and optimized media upload/download with progress display.
 - **Pagination**: Cursor-based pagination implemented for chats list, contacts list, and message search using base64-encoded JSON cursors. Page size defaults to 50 items. Infinite scroll with FlatList onEndReached for seamless loading.
 - **Modern Emoji Rendering**: Messages consisting only of emojis are displayed with larger, lively sizes (64px for 1 emoji down to 28px for 5+) and without bubble background for a clean, modern look.
+- **Animated Emojis**: Emoji-only messages use Lottie animations from Google Noto Animated Emojis (CC BY 4.0) for a lively, engaging chat experience. Supported emojis include: ❤️, 👍, 😂, 😍, 🔥, 🎉, 👎, 😭, 😮, 😡, 😊, 🤔, 💯, ✅, ❌. Unsupported emojis fall back to static text. Animations loop continuously and are stored in `assets/animations/emojis/`.
 - **Error Handling**: Robust API and WebSocket error handling, including automatic WebSocket reconnection with exponential backoff.
 
 **System Design Choices:**

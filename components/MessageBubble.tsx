@@ -23,6 +23,7 @@ import { VoiceMessageUploading } from "./VoiceMessageUploading";
 import { CachedImage } from "./CachedImage";
 import { CircularProgress } from "./CircularProgress";
 import { CachedVideo } from "./CachedVideo";
+import { AnimatedEmojiText } from "./AnimatedEmoji";
 import { mediaCache } from "@/services/mediaCache";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
@@ -462,14 +463,12 @@ export function MessageBubble({
 
         {message.text ? (
           isEmojiOnlyMessage(message.text) ? (
-            <ThemedText
-              style={[
-                styles.emojiText,
-                { fontSize: getEmojiSize(countEmojis(message.text)) },
-              ]}
-            >
-              {message.text}
-            </ThemedText>
+            <View style={styles.animatedEmojiContainer}>
+              <AnimatedEmojiText 
+                text={message.text} 
+                emojiSize={getEmojiSize(countEmojis(message.text))} 
+              />
+            </View>
           ) : (
             <View>
               <ThemedText
@@ -616,6 +615,11 @@ const styles = StyleSheet.create({
   emojiText: {
     textAlign: "center",
     lineHeight: 80,
+    paddingVertical: Spacing.xs,
+  },
+  animatedEmojiContainer: {
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.xs,
   },
   footer: {

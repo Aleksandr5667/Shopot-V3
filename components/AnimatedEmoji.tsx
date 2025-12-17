@@ -99,6 +99,9 @@ export function AnimatedEmojiText({ text, emojiSize }: AnimatedEmojiTextProps) {
             </View>
           );
         }
+        if (part.content.trim() === "") {
+          return <View key={index} style={{ width: emojiSize * 0.15 }} />;
+        }
         return null;
       })}
     </View>
@@ -113,12 +116,6 @@ export function hasAnimatedEmoji(text: string): boolean {
     const normalizedEmoji = emoji.replace(/\uFE0F/g, "");
     return EMOJI_ANIMATIONS[emoji] || EMOJI_ANIMATIONS[normalizedEmoji];
   });
-}
-
-export function getAnimatedEmojis(text: string): string[] {
-  const matches = text.match(EMOJI_REGEX);
-  if (!matches) return [];
-  return matches;
 }
 
 const styles = StyleSheet.create({
