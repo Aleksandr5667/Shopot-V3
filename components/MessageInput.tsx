@@ -429,6 +429,30 @@ export function MessageInput({
         </Animated.View>
 
         <Animated.View style={[styles.normalInputRow, normalInputStyle]}>
+          <View style={styles.leftButtonContainer}>
+            {isEditing ? (
+              <Pressable
+                onPress={onCancelEdit}
+                style={({ pressed }) => [
+                  styles.circleButton,
+                  { backgroundColor: theme.primary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="x" size={20} color="#FFFFFF" />
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={onAttachPress}
+                style={({ pressed }) => [
+                  styles.circleButton,
+                  { backgroundColor: theme.primary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="paperclip" size={20} color="#FFFFFF" />
+              </Pressable>
+            )}
+          </View>
+
           <View
             style={[
               styles.inputContainer,
@@ -438,28 +462,6 @@ export function MessageInput({
               },
             ]}
           >
-            {isEditing ? (
-              <Pressable
-                onPress={onCancelEdit}
-                style={({ pressed }) => [
-                  styles.attachButton,
-                  { opacity: pressed ? 0.5 : 1 },
-                ]}
-              >
-                <Feather name="x" size={24} color={theme.primary} />
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={onAttachPress}
-                style={({ pressed }) => [
-                  styles.attachButton,
-                  { opacity: pressed ? 0.5 : 1 },
-                ]}
-              >
-                <Feather name="paperclip" size={24} color={theme.primary} />
-              </Pressable>
-            )}
-
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder={isEditing ? t("chat.editMessage") : t("chats.typeMessage")}
@@ -530,9 +532,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
   },
-  attachButton: {
+  leftButtonContainer: {
+    width: 40,
+    height: 48,
+    marginRight: Spacing.xs,
+    justifyContent: "flex-end",
+    paddingBottom: 4,
+  },
+  circleButton: {
     width: 40,
     height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -552,8 +562,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingTop: Platform.OS === "ios" ? 12 : 10,
     paddingBottom: Platform.OS === "ios" ? 12 : 10,
-    paddingRight: Spacing.md,
-    paddingLeft: 0,
+    paddingHorizontal: Spacing.md,
   },
   sendButton: {
     width: 40,
