@@ -446,7 +446,7 @@ export function MessageInput({
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >
-                <Feather name="x" size={22} color={theme.textSecondary} />
+                <Feather name="x" size={24} color={theme.primary} />
               </Pressable>
             ) : (
               <Pressable
@@ -456,7 +456,7 @@ export function MessageInput({
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >
-                <Feather name="paperclip" size={22} color={theme.textSecondary} />
+                <Feather name="paperclip" size={24} color={theme.primary} />
               </Pressable>
             )}
 
