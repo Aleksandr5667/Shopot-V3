@@ -58,6 +58,9 @@ export function MessageInput({
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const lastTypingTime = useRef<number>(0);
+  const textRef = useRef<string>("");
+  const ignoreNextChangeRef = useRef(false);
+  const inputRef = useRef<TextInput>(null);
   
   const isRecordingRef = useRef(false);
   const cancelRequestedRef = useRef(false);
@@ -299,18 +302,31 @@ export function MessageInput({
       return;
     }
     
-    const trimmedText = text.trim();
-    if (trimmedText && !isSending) {
-      triggerSendAnimation();
-      setIsSending(true);
-      setText("");
-      try {
-        await onSend(trimmedText);
-      } finally {
-        setIsSending(false);
-      }
+    if (isSending) return;
+    
+    // Send immediately using the ref value (latest text)
+    const trimmedText = textRef.current.trim();
+    if (!trimmedText) return;
+    
+    triggerSendAnimation();
+    setIsSending(true);
+    
+    // Set flag to ignore late T9 corrections that might try to repopulate the field
+    ignoreNextChangeRef.current = true;
+    setText("");
+    textRef.current = "";
+    
+    try {
+      await onSend(trimmedText);
+    } finally {
+      setIsSending(false);
+      // Reset the ignore flag quickly - just enough to catch the immediate T9 callback
+      // but not long enough to block new user input
+      setTimeout(() => {
+        ignoreNextChangeRef.current = false;
+      }, 50);
     }
-  }, [text, isSending, onSend, triggerSendAnimation, isEditing, onSaveEdit]);
+  }, [isSending, onSend, triggerSendAnimation, isEditing, onSaveEdit]);
 
   const sendButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -368,7 +384,13 @@ export function MessageInput({
       return;
     }
     
+    // Ignore late T9 corrections that arrive after we already sent and cleared
+    if (ignoreNextChangeRef.current) {
+      return;
+    }
+    
     setText(newText);
+    textRef.current = newText;
     
     if (onTyping && newText.length > 0) {
       const now = Date.now();
@@ -463,6 +485,7 @@ export function MessageInput({
             ]}
           >
             <TextInput
+              ref={inputRef}
               style={[styles.input, { color: theme.text }]}
               placeholder={isEditing ? t("chat.editMessage") : t("chats.typeMessage")}
               placeholderTextColor={theme.textSecondary}
