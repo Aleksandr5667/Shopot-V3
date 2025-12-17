@@ -379,8 +379,12 @@ export function MessageInput({
     }
   }, [onTyping, isEditing, onEditTextChange]);
 
+  const bottomPadding = Platform.OS === 'android' 
+    ? Math.max(insets.bottom + Spacing.sm, 48) 
+    : insets.bottom + Spacing.sm;
+
   return (
-    <View style={{ backgroundColor: theme.inputBackground }}>
+    <View style={[styles.wrapper, { backgroundColor: theme.inputBackground }]}>
       {isEditing ? (
         <View style={[styles.editPanel, { backgroundColor: theme.backgroundSecondary, borderTopColor: theme.inputBorder }]}>
           <View style={[styles.editIndicator, { backgroundColor: theme.primary }]} />
@@ -403,7 +407,7 @@ export function MessageInput({
           styles.container,
           {
             backgroundColor: theme.inputBackground,
-            paddingBottom: insets.bottom + Spacing.sm,
+            paddingBottom: bottomPadding,
           },
         ]}
       >
@@ -425,36 +429,37 @@ export function MessageInput({
         </Animated.View>
 
         <Animated.View style={[styles.normalInputRow, normalInputStyle]}>
-          {isEditing ? (
-            <Pressable
-              onPress={onCancelEdit}
-              style={({ pressed }) => [
-                styles.iconButton,
-                { opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
-              <Feather name="x" size={24} color={theme.text} />
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={onAttachPress}
-              style={({ pressed }) => [
-                styles.iconButton,
-                { opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
-              <Feather name="paperclip" size={24} color={theme.primary} />
-            </Pressable>
-          )}
-
           <View
             style={[
               styles.inputContainer,
               {
-                backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F4F4F4",
+                borderColor: isDark ? "rgba(255,255,255,0.12)" : "#E5E5E5",
               },
             ]}
           >
+            {isEditing ? (
+              <Pressable
+                onPress={onCancelEdit}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Feather name="x" size={22} color={theme.textSecondary} />
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={onAttachPress}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Feather name="paperclip" size={22} color={theme.textSecondary} />
+              </Pressable>
+            )}
+
             <TextInput
               style={[styles.input, { color: theme.text }]}
               placeholder={isEditing ? t("chat.editMessage") : t("chats.typeMessage")}
@@ -478,12 +483,12 @@ export function MessageInput({
                       styles.micButton,
                       isRecording 
                         ? styles.micButtonRecording
-                        : { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" },
+                        : { backgroundColor: theme.primary },
                       isKeyboardVisible && !isRecording && { opacity: 0.4 },
                     ]}
                     pointerEvents={isKeyboardVisible ? "none" : "auto"}
                   >
-                    <Feather name="mic" size={22} color={isRecording ? "#FFFFFF" : theme.primary} />
+                    <Feather name="mic" size={20} color="#FFFFFF" />
                   </View>
                 </Animated.View>
               </GestureDetector>
@@ -500,7 +505,7 @@ export function MessageInput({
                 sendButtonAnimatedStyle,
               ]}
             >
-              <Feather name={isEditing ? "check" : "send"} size={20} color="#FFFFFF" />
+              <Feather name={isEditing ? "check" : "send"} size={18} color="#FFFFFF" />
             </AnimatedPressable>
           </Animated.View>
         </View>
@@ -510,50 +515,57 @@ export function MessageInput({
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(0,0,0,0.1)",
+  },
   container: {
     flexDirection: "row",
     alignItems: "flex-end",
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingTop: Spacing.sm,
-    borderTopLeftRadius: BorderRadius.md,
-    borderTopRightRadius: BorderRadius.md,
   },
   normalInputRow: {
     flex: 1,
     flexDirection: "row",
     alignItems: "flex-end",
   },
-  iconButton: {
-    width: 44,
-    height: 44,
+  attachButton: {
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
   },
   inputContainer: {
     flex: 1,
-    borderRadius: 22,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.OS === "ios" ? 10 : 6,
-    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    borderRadius: 24,
+    borderWidth: 1,
+    minHeight: 48,
     maxHeight: 120,
-    justifyContent: "center",
   },
   input: {
+    flex: 1,
     fontSize: 16,
     maxHeight: 100,
     lineHeight: 22,
+    paddingTop: Platform.OS === "ios" ? 12 : 10,
+    paddingBottom: Platform.OS === "ios" ? 12 : 10,
+    paddingRight: Spacing.md,
+    paddingLeft: 0,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
   micButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -561,16 +573,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF3B30",
   },
   buttonContainer: {
-    width: 44,
-    height: 44,
-    marginLeft: Spacing.sm,
+    width: 40,
+    height: 48,
+    marginLeft: Spacing.xs,
+    justifyContent: "flex-end",
+    paddingBottom: 4,
   },
   buttonWrapper: {
     position: "absolute",
-    top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 4,
+    height: 40,
   },
   sendButtonOverlay: {
     zIndex: 1,
