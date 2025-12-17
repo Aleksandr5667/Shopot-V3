@@ -8,6 +8,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiService } from "@/services/api";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -22,6 +23,7 @@ export default function EmailVerificationScreen({ navigation, route }: EmailVeri
   const { t } = useTranslation();
   const { setUserFromVerification } = useAuth();
   const { email } = route.params;
+  const { paddingTop, paddingBottom } = useScreenInsets({ topSpacing: Spacing.md });
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,7 +116,12 @@ export default function EmailVerificationScreen({ navigation, route }: EmailVeri
   };
 
   return (
-    <ScreenKeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
+    <ScreenKeyboardAwareScrollView
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop, paddingBottom }
+      ]}
+    >
       <View style={styles.header}>
         <ThemedText type="h2" style={styles.title}>
           {t("auth.verifyEmailTitle")}

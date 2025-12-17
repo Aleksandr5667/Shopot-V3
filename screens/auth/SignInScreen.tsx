@@ -9,6 +9,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 
@@ -20,6 +21,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const { theme, isDark } = useTheme();
   const { t } = useTranslation();
   const { signIn } = useAuth();
+  const { paddingTop, paddingBottom } = useScreenInsets({ topSpacing: Spacing.md });
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -94,7 +96,10 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
   return (
     <ScreenKeyboardAwareScrollView
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop, paddingBottom }
+      ]}
     >
       <View style={styles.cardWrapper}>
         <LinearGradient

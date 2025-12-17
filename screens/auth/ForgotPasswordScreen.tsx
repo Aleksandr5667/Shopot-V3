@@ -9,6 +9,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { apiService } from "@/services/api";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 
@@ -19,6 +20,7 @@ type ForgotPasswordScreenProps = {
 export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScreenProps) {
   const { theme, isDark } = useTheme();
   const { t } = useTranslation();
+  const { paddingTop, paddingBottom } = useScreenInsets({ topSpacing: Spacing.md });
 
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +90,12 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
   };
 
   return (
-    <ScreenKeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
+    <ScreenKeyboardAwareScrollView
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop, paddingBottom }
+      ]}
+    >
       <View style={styles.cardWrapper}>
         <LinearGradient
           colors={gradientColors}

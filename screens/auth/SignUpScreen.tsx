@@ -10,6 +10,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 import api from "@/services/api";
 
@@ -22,6 +23,7 @@ type EmailStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "er
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const { theme, isDark } = useTheme();
   const { t } = useTranslation();
+  const { paddingTop, paddingBottom } = useScreenInsets({ topSpacing: Spacing.md });
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -245,7 +247,10 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
   return (
     <ScreenKeyboardAwareScrollView
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop, paddingBottom }
+      ]}
     >
       <View style={styles.cardWrapper}>
         <LinearGradient
