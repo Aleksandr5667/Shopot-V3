@@ -56,6 +56,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [dynamicGroupAvatarUrl, setDynamicGroupAvatarUrl] = useState<string | undefined>(groupAvatarUrl);
+  const [dynamicMemberCount, setDynamicMemberCount] = useState<number>(memberCount || groupParticipants?.length || 0);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -110,18 +111,29 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { subscribe } = useWebSocket();
   
   useEffect(() => {
-    if (!participantId || isGroup) return;
-    
     const unsubscribe = subscribe((event) => {
+      if (!participantId && !isGroup) return;
+      
       if (event.type === "user_online" && event.userId === participantId) {
         setIsParticipantOnline(true);
       } else if (event.type === "user_offline" && event.userId === participantId) {
         setIsParticipantOnline(false);
       }
+      
+      if (isGroup) {
+        if (event.type === "members_added" && event.chatId.toString() === chatId) {
+          const addedCount = event.addedMembers?.length || 1;
+          setDynamicMemberCount(prev => prev + addedCount);
+        } else if (event.type === "member_removed" && event.chatId.toString() === chatId) {
+          setDynamicMemberCount(prev => Math.max(1, prev - 1));
+        } else if (event.type === "member_left" && event.chatId.toString() === chatId) {
+          setDynamicMemberCount(prev => Math.max(1, prev - 1));
+        }
+      }
     });
     
     return unsubscribe;
-  }, [participantId, isGroup, subscribe]);
+  }, [participantId, isGroup, subscribe, chatId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -228,7 +240,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               </ThemedText>
             ) : isGroup ? (
               <ThemedText style={[styles.headerSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
-                {memberCount || groupParticipants?.length || 0} {t("chat.members")}
+                {dynamicMemberCount} {t("chat.members")}
               </ThemedText>
             ) : participantOnline ? (
               <ThemedText style={[styles.headerSubtitle, { color: "#25D366" }]} numberOfLines={1}>
@@ -248,7 +260,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         </HeaderButton>
       ),
     });
-  }, [navigation, participant, isGroup, groupParticipants, memberCount, theme, displayName, avatarColor, avatarUrl, participantOnline, t, handleHeaderPress, typingText, isSearchMode, toggleSearchMode]);
+  }, [navigation, participant, isGroup, groupParticipants, dynamicMemberCount, theme, displayName, avatarColor, avatarUrl, participantOnline, t, handleHeaderPress, typingText, isSearchMode, toggleSearchMode]);
 
   const shouldScrollRef = useRef(false);
 
