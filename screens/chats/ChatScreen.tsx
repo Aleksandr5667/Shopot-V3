@@ -46,8 +46,6 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { markAsRead, setActiveChat, updateChatLastMessage } = useChatsContext();
-  const participantCount = isGroup ? (memberCount || 2) : 2;
-  const { messages, sendMessage, editMessage, deleteMessage, hideMessageLocally, typingUsers, sendTypingIndicator, loadMoreMessages, isLoadingMore, hasMoreMessages, chatDeleted } = useMessages(chatId, updateChatLastMessage, participantCount);
   const { isOnline, checkUserOnline, refreshOnlineStatus } = useOnlineStatus();
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -57,6 +55,9 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [dynamicGroupAvatarUrl, setDynamicGroupAvatarUrl] = useState<string | undefined>(groupAvatarUrl);
   const [dynamicMemberCount, setDynamicMemberCount] = useState<number>(memberCount || groupParticipants?.length || 0);
+  
+  const participantCount = isGroup ? dynamicMemberCount : 2;
+  const { messages, sendMessage, editMessage, deleteMessage, hideMessageLocally, typingUsers, sendTypingIndicator, loadMoreMessages, isLoadingMore, hasMoreMessages, chatDeleted } = useMessages(chatId, updateChatLastMessage, participantCount);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
