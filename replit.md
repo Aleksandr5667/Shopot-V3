@@ -36,6 +36,7 @@ The application is built with React Native and Expo, utilizing a component-based
 **System Design Choices:**
 - **Context API**: Utilizes React Context for global state management, including `AuthContext`, `WebSocketContext`, and `NotificationsContext`.
 - **Custom Hooks**: Encapsulates logic for data fetching and manipulation (e.g., `useChats`, `useMessages`, `useContacts`, `useSearch`, `useNotifications`).
+- **Screen Insets**: Centralized `useScreenInsets` hook handles safe area insets with platform-specific optimizations. Android devices get minimum 48px bottom padding to prevent gesture navigation bar overlap. Auth screens use custom `topSpacing` for better vertical centering.
 - **Service Layer**: Dedicated services for API interaction, WebSocket communication, and various caching mechanisms (e.g., `api.ts`, `websocket.ts`, `chatCache.ts`, `mediaCache.ts`).
 - **Media Storage**: Media files are uploaded via pre-signed URLs to object storage.
 
