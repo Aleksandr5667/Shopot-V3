@@ -258,23 +258,25 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, [uri, audioUri, status, player, isPlaying, isDownloading, hasError]);
 
   useEffect(() => {
-    if (audioUri && status?.isLoaded && !isPlaying && shouldAutoPlayRef.current) {
-      shouldAutoPlayRef.current = false;
-      
-      audioPlayerManager.stopCurrent();
-      playerIdRef.current = audioPlayerManager.generatePlayerId();
-      audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
-        setIsPlaying(false);
-      });
-      
-      try {
-        player.play();
-        setIsPlaying(true);
-      } catch (e) {
-        setIsPlaying(false);
-      }
+    if (!audioUri || !status || !status.isLoaded) return;
+    if (!shouldAutoPlayRef.current) return;
+    if (isPlaying) return;
+    
+    shouldAutoPlayRef.current = false;
+    
+    audioPlayerManager.stopCurrent();
+    playerIdRef.current = audioPlayerManager.generatePlayerId();
+    audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
+      setIsPlaying(false);
+    });
+    
+    try {
+      player.play();
+      setIsPlaying(true);
+    } catch (e) {
+      setIsPlaying(false);
     }
-  }, [audioUri, status?.isLoaded]);
+  }, [audioUri, status, isPlaying, player]);
 
   const playButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withTiming(isPlaying ? 0.95 : 1, { duration: 150 }) }],
