@@ -239,7 +239,7 @@ export default function ChatsListScreen() {
 
           <View style={styles.headerTitleContainer}>
             <ThemedText type="h4" style={styles.headerTitle}>
-              Шёпот
+              {t("chats.title")}
             </ThemedText>
           </View>
 

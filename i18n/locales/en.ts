@@ -72,6 +72,8 @@ export default {
   chats: {
     title: "Chats",
     noChats: "No conversations yet",
+    welcomeChatName: "Shepot",
+    welcomeMessage: "Welcome to Shepot! Here you can chat with friends and family. Find users through search and start a conversation. You can delete this chat.",
     startConversation: "Start a conversation",
     newChat: "New Chat",
     typeMessage: "Type a message...",
