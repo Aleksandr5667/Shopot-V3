@@ -314,6 +314,9 @@ export function MessageBubble({
     : 'rgba(255, 255, 255, 0.98)';
 
   const showSenderName = isGroup && !isOwn && message.senderName;
+  
+  // Media-only message: has image/video but no text (excluding audio)
+  const isMediaOnly = hasMedia && !isAudio && !message.text && !message.replyToMessage && !showSenderName;
 
   const renderBubbleContent = () => {
     const bubbleRadius = 22;
@@ -418,7 +421,7 @@ export function MessageBubble({
         ) : hasMedia ? (
           <Pressable 
             onPress={message.isUploading ? undefined : (isMediaLoaded ? onMediaPress : handleLoadMedia)} 
-            style={styles.mediaContainer}
+            style={[styles.mediaContainer, isMediaOnly && { marginBottom: 0 }]}
           >
             {mediaType === "photo" || mediaType === "image" ? (
               <View style={styles.mediaWrapper}>
@@ -455,6 +458,19 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
+                {isMediaOnly ? (
+                  <View style={styles.mediaTimeOverlay}>
+                    {message.isEdited ? (
+                      <ThemedText type="caption" style={styles.mediaTimeText}>
+                        {t("chat.edited")}
+                      </ThemedText>
+                    ) : null}
+                    <ThemedText type="caption" style={styles.mediaTimeText}>
+                      {formatTime(message.timestamp)}
+                    </ThemedText>
+                    <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
+                  </View>
+                ) : null}
               </View>
             ) : (
               <View style={[styles.media, styles.videoPlaceholder]}>
@@ -487,6 +503,19 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
+                {isMediaOnly ? (
+                  <View style={styles.mediaTimeOverlay}>
+                    {message.isEdited ? (
+                      <ThemedText type="caption" style={styles.mediaTimeText}>
+                        {t("chat.edited")}
+                      </ThemedText>
+                    ) : null}
+                    <ThemedText type="caption" style={styles.mediaTimeText}>
+                      {formatTime(message.timestamp)}
+                    </ThemedText>
+                    <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
+                  </View>
+                ) : null}
               </View>
             )}
           </Pressable>
@@ -534,6 +563,7 @@ export function MessageBubble({
           )
         ) : null}
 
+        {!isMediaOnly ? (
         <View style={[styles.footer, isEmojiOnly && styles.footerEmoji]}>
           {message.isEdited ? (
             <ThemedText type="caption" style={[styles.editedLabel, { color: isEmojiOnly ? theme.textSecondary : (isOwn ? (isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.45)") : theme.textSecondary) }]}>
@@ -557,8 +587,18 @@ export function MessageBubble({
             <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={isEmojiOnly} />
           )}
         </View>
+        ) : null}
       </>
     );
+
+    // Media-only messages: render without bubble background
+    if (isMediaOnly) {
+      return (
+        <View style={styles.mediaOnlyBubble}>
+          {innerContent}
+        </View>
+      );
+    }
 
     if (isOwn && !isEmojiOnly) {
       return (
@@ -772,5 +812,28 @@ const styles = StyleSheet.create({
   expandButtonText: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  mediaTimeOverlay: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  mediaTimeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  mediaOnlyBubble: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
 });
