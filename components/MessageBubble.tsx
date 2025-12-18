@@ -25,6 +25,7 @@ import { CircularProgress } from "./CircularProgress";
 import { CachedVideo } from "./CachedVideo";
 import { AnimatedEmojiText } from "./AnimatedEmoji";
 import { mediaCache } from "@/services/mediaCache";
+import { listenedMessagesService } from "@/services/listenedMessages";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
@@ -143,6 +144,31 @@ export function MessageBubble({
   const [isMediaLoaded, setIsMediaLoaded] = useState(isAlreadyKnownLoaded);
   const [isCheckingCache, setIsCheckingCache] = useState(!isAlreadyKnownLoaded && !!mediaKey);
   const [isExpanded, setIsExpanded] = useState(false);
+  // null = not yet determined, true = listened, false = not listened
+  const [voiceListenedState, setVoiceListenedState] = useState<boolean | null>(() => {
+    // If service is already initialized, use sync value
+    if (listenedMessagesService.isInitialized()) {
+      return listenedMessagesService.isListened(message.id);
+    }
+    return null; // Don't know yet
+  });
+  
+  // Check listened status asynchronously
+  useEffect(() => {
+    if (message.type !== "voice") return;
+    
+    listenedMessagesService.isListenedAsync(message.id).then((listened) => {
+      setVoiceListenedState(listened);
+    });
+  }, [message.id, message.type]);
+  
+  // For rendering: null means we haven't loaded yet, treat as listened to avoid flash
+  const isVoiceListened = voiceListenedState === null ? true : voiceListenedState;
+  
+  const handleVoiceListened = useCallback((messageId: string) => {
+    setVoiceListenedState(true);
+    listenedMessagesService.markAsListened(messageId);
+  }, []);
 
   const isLongMessage = message.text && (
     message.text.length > MAX_COLLAPSED_CHARS || 
@@ -381,6 +407,9 @@ export function MessageBubble({
                 uri={mediaSource}
                 duration={message.audioDuration || 0}
                 isOwn={isOwn}
+                messageId={message.id}
+                isListened={isVoiceListened}
+                onListened={handleVoiceListened}
               />
             )}
           </View>

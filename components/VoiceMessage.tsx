@@ -21,6 +21,9 @@ interface VoiceMessageProps {
   uri: string;
   duration: number;
   isOwn: boolean;
+  messageId?: string;
+  isListened?: boolean;
+  onListened?: (messageId: string) => void;
 }
 
 const WAVEFORM_BARS = 28;
@@ -65,7 +68,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function VoiceMessage({ uri, duration, isOwn }: VoiceMessageProps) {
+export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: initialListened = false, onListened }: VoiceMessageProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -74,9 +77,16 @@ export function VoiceMessage({ uri, duration, isOwn }: VoiceMessageProps) {
   const [cachedUri, setCachedUri] = useState<string | null>(null);
   const [audioSource, setAudioSource] = useState<string | null>(null);
   const [pendingPlay, setPendingPlay] = useState(false);
+  const [hasBeenListened, setHasBeenListened] = useState(initialListened);
   const wasLoadedRef = useRef(false);
   const hasFinishedRef = useRef(false);
+  const hasStartedPlayingRef = useRef(false);
   const progress = useSharedValue(0);
+
+  // Sync with prop when service finishes loading listened state
+  useEffect(() => {
+    setHasBeenListened(initialListened);
+  }, [initialListened]);
 
   const player = useAudioPlayer(audioSource);
   const status = useAudioPlayerStatus(player);
@@ -86,6 +96,43 @@ export function VoiceMessage({ uri, duration, isOwn }: VoiceMessageProps) {
       player.loop = false;
     }
   }, [player]);
+
+  // Preload audio in background for faster playback
+  const isPreloadingRef = useRef(false);
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    if (cachedUri) return; // Already cached
+    if (isPreloadingRef.current) return; // Already preloading
+    
+    let mounted = true;
+    isPreloadingRef.current = true;
+    
+    const preloadAudio = async () => {
+      try {
+        // Check if already cached
+        const existingCached = await mediaCache.getCachedUri(uri);
+        if (existingCached && mounted) {
+          setCachedUri(existingCached);
+          return;
+        }
+        // Preload in background (without showing loading UI)
+        const cached = await mediaCache.cacheMedia(uri);
+        if (mounted) {
+          setCachedUri(cached);
+        }
+      } catch (error) {
+        // Silently fail - will retry when user presses play
+      } finally {
+        isPreloadingRef.current = false;
+      }
+    };
+    
+    preloadAudio();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [uri, cachedUri]);
 
   const waveformHeights = useMemo(() => {
     return Array.from({ length: WAVEFORM_BARS }, (_, i) => {
@@ -132,23 +179,44 @@ export function VoiceMessage({ uri, duration, isOwn }: VoiceMessageProps) {
       const currentProgress = status.currentTime / status.duration;
       progress.value = currentProgress;
 
+      // Track when playing starts
+      if (status.playing && !hasStartedPlayingRef.current) {
+        hasStartedPlayingRef.current = true;
+        // Mark as listened when playback starts
+        if (!hasBeenListened) {
+          setHasBeenListened(true);
+          if (messageId && onListened) {
+            onListened(messageId);
+          }
+        }
+      }
+
+      // Reset flag when playing starts fresh
       if (status.playing) {
         hasFinishedRef.current = false;
       }
 
-      const hasReachedEnd = status.currentTime >= status.duration - 0.1;
-      if (hasReachedEnd && !status.playing && !hasFinishedRef.current) {
+      // Detect playback end - check if we were playing but now stopped near the end
+      const hasReachedEnd = status.currentTime >= status.duration - 0.15;
+      const justStopped = hasStartedPlayingRef.current && !status.playing;
+      
+      if (hasReachedEnd && justStopped && !hasFinishedRef.current) {
         hasFinishedRef.current = true;
+        hasStartedPlayingRef.current = false;
         progress.value = 0;
-        try {
-          player.seekTo(0);
-        } catch (error) {
-          console.warn("[VoiceMessage] SeekTo failed:", error);
-        }
-        audioPlayerManager.unregisterPlayer(player);
+        
+        // Use setTimeout to avoid state update during render
+        setTimeout(() => {
+          try {
+            player.seekTo(0);
+          } catch (error) {
+            console.warn("[VoiceMessage] SeekTo failed:", error);
+          }
+          audioPlayerManager.unregisterPlayer(player);
+        }, 50);
       }
     }
-  }, [status?.currentTime, status?.duration, status?.playing, status?.isLoaded, progress, player]);
+  }, [status?.currentTime, status?.duration, status?.playing, status?.isLoaded, progress, player, hasBeenListened, messageId, onListened]);
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -346,6 +414,9 @@ export function VoiceMessage({ uri, duration, isOwn }: VoiceMessageProps) {
               >
                 {status?.playing ? formatDuration(currentPosition) : formatDuration(displayDuration)}
               </ThemedText>
+              {!isOwn && !hasBeenListened ? (
+                <View style={[styles.unlistenedDot, { backgroundColor: theme.primary }]} />
+              ) : null}
             </View>
           </>
         )}
@@ -394,6 +465,12 @@ const styles = StyleSheet.create({
   duration: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  unlistenedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: 6,
   },
   loadingContainer: {
     alignItems: "center",

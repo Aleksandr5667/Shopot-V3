@@ -9,6 +9,7 @@ import React, {
 import { User } from "@/store/types";
 import { apiService, ServerUser } from "@/services/api";
 import { chatCache } from "@/services/chatCache";
+import { listenedMessagesService } from "@/services/listenedMessages";
 
 interface AuthContextType {
   user: User | null;
@@ -56,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loadUser = async () => {
     try {
       await apiService.init();
+      await listenedMessagesService.init();
       const result = await apiService.getCurrentUser();
       if (result.success && result.data) {
         setUser(serverUserToUser(result.data));
