@@ -8,6 +8,7 @@ import { notificationSoundService } from "@/services/notificationSound";
 import { chatCache } from "@/services/chatCache";
 import { messageQueue, QueuedMessage } from "@/services/messageQueue";
 import { welcomeChatService } from "@/services/welcomeChat";
+import { deletedMessagesService } from "@/services/deletedMessagesService";
 
 type UpdateChatLastMessageFn = (chatId: string, message: Message) => void;
 
@@ -170,7 +171,6 @@ export function useChats() {
           return prev;
         });
       } else if (event.type === "message_deleted") {
-        // Delete message from cache even when not viewing the chat
         const messageId = event.messageId?.toString();
         const chatIdNum = event.chatId;
         
@@ -178,7 +178,9 @@ export function useChats() {
         
         const chatIdStr = chatIdNum.toString();
         
-        // Delete the message from cache
+        deletedMessagesService.markAsDeleted(messageId);
+        console.log("[useChats] Marked message as deleted:", messageId);
+        
         chatCache.getMessages(chatIdStr).then((cachedMessages) => {
           if (cachedMessages && cachedMessages.length > 0) {
             const filteredMessages = cachedMessages.filter((m) => m.id !== messageId);
@@ -368,12 +370,13 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
   const pendingDeliveryRef = useRef<Map<string, { deliveredTo: number[]; readBy?: string[] }>>(new Map());
 
   const loadFromCache = useCallback(async () => {
+    await deletedMessagesService.initialize();
     const cached = await chatCache.getMessages(chatId);
     const numericChatId = parseInt(chatId, 10);
     const pendingQueue = !isNaN(numericChatId) ? messageQueue.getQueueForChat(numericChatId) : [];
     
     if (cached && cached.length > 0) {
-      let serverMessages = cached.filter((m) => !m.id.startsWith("temp_"));
+      let serverMessages = cached.filter((m) => !m.id.startsWith("temp_") && !deletedMessagesService.isDeleted(m.id));
       
       const pendingQueueIds = new Set(pendingQueue.map((q) => q.id));
       let tempMessages = cached.filter((m) => m.id.startsWith("temp_") && pendingQueueIds.has(m.id));
@@ -437,7 +440,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
       if (result.success && result.data) {
         const mappedMessages = result.data.map((serverMessage) =>
           apiService.serverMessageToMessage(serverMessage, user.visibleId!)
-        );
+        ).filter(m => !deletedMessagesService.isDeleted(m.id));
         
         setHasMoreMessages(result.data.length >= MESSAGES_PAGE_SIZE);
         
@@ -613,8 +616,10 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
         }
       } else if (event.type === "message_deleted") {
         if (typeof event.chatId !== "undefined" && typeof event.messageId !== "undefined" && event.chatId === numericChatId) {
+          const deletedId = event.messageId.toString();
+          deletedMessagesService.markAsDeleted(deletedId);
           setMessages((prev) => {
-            const updated = prev.filter((m) => m.id !== event.messageId.toString());
+            const updated = prev.filter((m) => m.id !== deletedId);
             chatCache.saveMessages(chatId, updated);
             return updated;
           });
@@ -940,6 +945,8 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
   const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
     if (welcomeChatService.isWelcomeChat(chatId)) return false;
     const isTemporaryMessage = messageId.startsWith("temp_");
+    
+    deletedMessagesService.markAsDeleted(messageId);
     
     setMessages((prev) => {
       const updated = prev.filter((m) => m.id !== messageId);

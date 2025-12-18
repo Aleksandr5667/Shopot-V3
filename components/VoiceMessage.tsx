@@ -85,8 +85,18 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     }
   }, [initialListened]);
 
-  const player = useAudioPlayer(audioUri);
+  const player = useAudioPlayer(audioUri ?? undefined);
   const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    console.log("[VoiceMessage] Player/status changed", { 
+      hasPlayer: !!player, 
+      audioUri: audioUri?.substring(0, 50),
+      isLoaded: status?.isLoaded,
+      duration: status?.duration,
+      shouldAutoPlay: shouldAutoPlayRef.current
+    });
+  }, [player, status, audioUri]);
 
   useEffect(() => {
     if (player) {
