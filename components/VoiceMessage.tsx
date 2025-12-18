@@ -79,6 +79,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const [pendingPlay, setPendingPlay] = useState(false);
   const [hasBeenListened, setHasBeenListened] = useState(initialListened);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const wasLoadedRef = useRef(false);
   const hasFinishedRef = useRef(false);
   const hasStartedPlayingRef = useRef(false);
@@ -257,8 +258,13 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const loadAndPlay = useCallback(async () => {
     if (Platform.OS === "web") return;
 
-    console.log("[VoiceMessage] loadAndPlay called, audioSource:", audioSource?.substring(0, 50), "isLoaded:", status?.isLoaded);
+    // If already loading audio, ignore tap
+    if (isLoadingAudio || pendingPlay) {
+      console.log("[VoiceMessage] Already loading, ignoring tap");
+      return;
+    }
 
+    // If audio is loaded and ready, handle play/pause
     if (audioSource && status?.isLoaded) {
       try {
         if (isPlaying) {
@@ -286,6 +292,15 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       return;
     }
 
+    // If audio source is set but not loaded yet, just wait
+    if (audioSource && !status?.isLoaded) {
+      console.log("[VoiceMessage] Audio source set, waiting for load...");
+      setPendingPlay(true);
+      return;
+    }
+
+    // Start loading audio
+    setIsLoadingAudio(true);
     audioPlayerManager.stopCurrent();
 
     setAudioModeAsync({
@@ -326,8 +341,10 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       console.warn("[VoiceMessage] Audio unavailable:", uri, error?.message);
       setHasError(true);
       setIsLoading(false);
+    } finally {
+      setIsLoadingAudio(false);
     }
-  }, [uri, cachedUri, audioSource, status, player, isPlaying]);
+  }, [uri, cachedUri, audioSource, status, player, isPlaying, isLoadingAudio, pendingPlay]);
 
   const playButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withTiming(isPlaying ? 0.95 : 1, { duration: 150 }) }],
