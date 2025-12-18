@@ -73,7 +73,7 @@ export default {
     title: "Chats",
     noChats: "No conversations yet",
     welcomeChatName: "Shepot",
-    welcomeMessage: "Welcome to Shepot! Here you can chat with friends and family. Find users through search and start a conversation. You can delete this chat.",
+    welcomeMessage: "Hi there! Welcome to Shepot!\n\nHere you can:\n\n- Chat with friends and family in private messages\n- Create group conversations for your team or friends\n- Send photos, videos and voice messages\n- Find users by email or ID\n\nTap the search button above to find friends and start chatting!",
     startConversation: "Start a conversation",
     newChat: "New Chat",
     typeMessage: "Type a message...",
