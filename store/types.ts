@@ -60,6 +60,7 @@ export interface Message {
   mediaType?: "photo" | "video" | "audio";
   mediaUri?: string;
   mediaUrl?: string;
+  thumbnailUrl?: string;
   audioDuration?: number;
   timestamp: string;
   status: "sending" | "sent" | "delivered" | "read" | "error";

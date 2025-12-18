@@ -3,6 +3,7 @@ import { apiService } from "./api";
 import { chunkedUploadService, CHUNKED_UPLOAD_CONFIG } from "./chunkedUpload";
 import { linkThumbnailToUrl } from "@/components/VideoThumbnail";
 import { mediaCache } from "./mediaCache";
+import { thumbnailService } from "./thumbnailService";
 
 const QUEUE_KEY = "@shepot_message_queue";
 
@@ -13,6 +14,8 @@ export interface QueuedMessage {
   type: "text" | "image" | "video" | "voice";
   mediaUri?: string;
   mediaUrl?: string;
+  thumbnailUri?: string;
+  thumbnailUrl?: string;
   mediaSize?: number;
   audioDuration?: number;
   replyToId?: number;
@@ -250,6 +253,36 @@ class MessageQueueService {
         }
       }
 
+      let thumbnailUrl = message.thumbnailUrl;
+      
+      if (message.mediaUri && !thumbnailUrl && (message.type === "image" || message.type === "video")) {
+        try {
+          console.log(`[MessageQueue] Generating thumbnail for ${message.type}`);
+          const thumbnailUri = await thumbnailService.generateThumbnail(
+            message.mediaUri,
+            message.type
+          );
+          
+          if (thumbnailUri) {
+            console.log("[MessageQueue] Uploading thumbnail...");
+            const thumbResult = await apiService.uploadMedia(
+              thumbnailUri,
+              "image",
+              undefined,
+              "thumbnails"
+            );
+            
+            if (thumbResult.success && thumbResult.data) {
+              thumbnailUrl = thumbResult.data;
+              this.queue[index].thumbnailUrl = thumbnailUrl;
+              console.log("[MessageQueue] Thumbnail uploaded:", thumbnailUrl);
+            }
+          }
+        } catch (thumbError) {
+          console.warn("[MessageQueue] Thumbnail generation/upload failed:", thumbError);
+        }
+      }
+
       this.queue[index].status = "sending";
       await this.saveQueue();
       this.notifyListeners();
@@ -259,6 +292,7 @@ class MessageQueueService {
         content: message.content || "",
         type: message.type,
         mediaUrl,
+        thumbnailUrl,
         replyToId: message.replyToId,
       });
 

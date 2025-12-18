@@ -217,13 +217,20 @@ export function MessageBubble({
         if (cachedUri) {
           loadedMediaCache.add(mediaKey);
           setIsMediaLoaded(true);
+        } else if (message.thumbnailUrl) {
+          loadedMediaCache.add(mediaKey);
+          setIsMediaLoaded(true);
         }
         setIsCheckingCache(false);
       }).catch(() => {
+        if (message.thumbnailUrl) {
+          loadedMediaCache.add(mediaKey);
+          setIsMediaLoaded(true);
+        }
         setIsCheckingCache(false);
       });
     }
-  }, [mediaKey]);
+  }, [mediaKey, message.thumbnailUrl]);
 
   useEffect(() => {
     if (isHighlighted) {
@@ -456,6 +463,7 @@ export function MessageBubble({
                     source={{ uri: mediaSource }}
                     style={styles.media}
                     contentFit="cover"
+                    thumbnailUrl={message.thumbnailUrl}
                   />
                 ) : isCheckingCache ? (
                   <View style={[styles.media, styles.mediaPlaceholder]}>
@@ -508,6 +516,7 @@ export function MessageBubble({
                     source={{ uri: mediaSource! }}
                     style={styles.media}
                     showPlayButton={true}
+                    thumbnailUrl={message.thumbnailUrl}
                   />
                 ) : isCheckingCache ? (
                   <View style={[styles.media, styles.mediaPlaceholder]}>

@@ -75,6 +75,7 @@ export interface ServerMessage {
   content: string;
   type: "text" | "image" | "video" | "voice" | "system";
   mediaUrl: string | null;
+  thumbnailUrl?: string | null;
   createdAt: string;
   readBy: number[];
   deliveredTo: number[];
@@ -699,6 +700,7 @@ class ApiService {
     content: string;
     type?: "text" | "image" | "video" | "voice";
     mediaUrl?: string;
+    thumbnailUrl?: string;
     replyToId?: number;
   }): Promise<ApiResponse<ServerMessage>> {
     try {
@@ -711,6 +713,7 @@ class ApiService {
           content: params.content,
           type: params.type || "text",
           mediaUrl: params.mediaUrl,
+          thumbnailUrl: params.thumbnailUrl,
           replyToId: params.replyToId,
         }),
       });
@@ -1024,7 +1027,7 @@ class ApiService {
     uri: string,
     type: "image" | "video" | "voice",
     onProgress?: (progress: number, uploadedBytes?: number, totalBytes?: number) => void,
-    category?: "avatars" | "images" | "videos" | "voice"
+    category?: "avatars" | "images" | "videos" | "voice" | "thumbnails"
   ): Promise<ApiResponse<string>> {
     try {
       const headers = await this.getHeaders();
@@ -1277,6 +1280,7 @@ class ApiService {
       type: serverMessage.type,
       mediaType,
       mediaUrl: serverMessage.mediaUrl || undefined,
+      thumbnailUrl: serverMessage.thumbnailUrl || undefined,
       replyToId: serverMessage.replyToId?.toString(),
       replyToMessage: serverMessage.replyToMessage
         ? {

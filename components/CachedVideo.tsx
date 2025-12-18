@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Platform, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { mediaCache, DownloadProgress } from "@/services/mediaCache";
 import { useTheme } from "@/hooks/useTheme";
 import { CircularProgress } from "./CircularProgress";
@@ -11,12 +12,14 @@ interface CachedVideoProps {
   source: { uri: string };
   style?: any;
   showPlayButton?: boolean;
+  thumbnailUrl?: string;
 }
 
 export function CachedVideo({
   source,
   style,
   showPlayButton = true,
+  thumbnailUrl,
 }: CachedVideoProps) {
   const { theme } = useTheme();
   const [cachedUri, setCachedUri] = useState<string | null>(null);
@@ -75,6 +78,37 @@ export function CachedVideo({
     };
     
     const showBytesInfo = bytesTotal > 0;
+    
+    if (thumbnailUrl) {
+      return (
+        <View style={[styles.placeholder, style]}>
+          <Image
+            source={{ uri: thumbnailUrl }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            blurRadius={2}
+          />
+          <View style={styles.downloadOverlay}>
+            <CircularProgress
+              progress={progressPercent}
+              size={64}
+              strokeWidth={3}
+              color="#FFFFFF"
+              backgroundColor="rgba(255,255,255,0.25)"
+              showPercentage={true}
+              showIcon={true}
+              iconName="download"
+              hasError={false}
+            />
+            {showBytesInfo ? (
+              <Text style={styles.bytesText}>
+                {formatBytes(bytesWritten)} / {formatBytes(bytesTotal)}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      );
+    }
     
     return (
       <View style={[styles.placeholder, style, { backgroundColor: theme.backgroundSecondary }]}>

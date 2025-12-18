@@ -10,6 +10,7 @@ interface CachedImageProps {
   style?: ImageStyle | ImageStyle[];
   contentFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
   placeholder?: string;
+  thumbnailUrl?: string;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -19,6 +20,7 @@ export function CachedImage({
   style,
   contentFit = "cover",
   placeholder,
+  thumbnailUrl,
   onLoad,
   onError,
 }: CachedImageProps) {
@@ -80,6 +82,37 @@ export function CachedImage({
     };
     
     const showBytesInfo = bytesTotal > 0;
+    
+    if (thumbnailUrl) {
+      return (
+        <View style={[styles.placeholder, style as any]}>
+          <Image
+            source={{ uri: thumbnailUrl }}
+            style={StyleSheet.absoluteFill}
+            contentFit={contentFit}
+            blurRadius={2}
+          />
+          <View style={styles.downloadOverlay}>
+            <CircularProgress
+              progress={progressPercent}
+              size={64}
+              strokeWidth={3}
+              color="#FFFFFF"
+              backgroundColor="rgba(255,255,255,0.25)"
+              showPercentage={true}
+              showIcon={true}
+              iconName="download"
+              hasError={false}
+            />
+            {showBytesInfo ? (
+              <Text style={styles.bytesText}>
+                {formatBytes(bytesWritten)} / {formatBytes(bytesTotal)}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      );
+    }
     
     return (
       <View style={[styles.placeholder, style as any, { backgroundColor: theme.backgroundSecondary }]}>
