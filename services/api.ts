@@ -76,6 +76,7 @@ export interface ServerMessage {
   type: "text" | "image" | "video" | "voice" | "system";
   mediaUrl: string | null;
   thumbnailUrl?: string | null;
+  thumbnail_url?: string | null;
   createdAt: string;
   readBy: number[];
   deliveredTo: number[];
@@ -1280,7 +1281,7 @@ class ApiService {
       type: serverMessage.type,
       mediaType,
       mediaUrl: serverMessage.mediaUrl || undefined,
-      thumbnailUrl: serverMessage.thumbnailUrl || undefined,
+      thumbnailUrl: serverMessage.thumbnailUrl || serverMessage.thumbnail_url || undefined,
       replyToId: serverMessage.replyToId?.toString(),
       replyToMessage: serverMessage.replyToMessage
         ? {
