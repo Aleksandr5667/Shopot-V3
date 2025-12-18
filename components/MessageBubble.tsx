@@ -64,6 +64,8 @@ const MAX_COLLAPSED_CHARS = 500;
 function isEmojiOnlyMessage(text: string | undefined): boolean {
   if (!text || text.trim().length === 0) return false;
   const trimmed = text.trim();
+  // Exclude messages that contain only digits (0-9) as they match \p{Emoji} but aren't actual emojis
+  if (/^[\d\s]+$/.test(trimmed)) return false;
   return EMOJI_ONLY_REGEX.test(trimmed) && trimmed.length <= 20;
 }
 
