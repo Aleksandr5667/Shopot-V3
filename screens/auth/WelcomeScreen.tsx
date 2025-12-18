@@ -97,7 +97,7 @@ function GlassButton({
         type="body" 
         style={[
           styles.glassButtonText, 
-          { color: isPrimary ? "#FFFFFF" : theme.primary }
+          { color: isPrimary ? "#FFFFFF" : (isDark ? "#FFFFFF" : theme.primary) }
         ]}
       >
         {children}
