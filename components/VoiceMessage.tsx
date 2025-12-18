@@ -75,6 +75,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   
   const playerIdRef = useRef<string>(audioPlayerManager.generatePlayerId());
   const hasMarkedListenedRef = useRef(false);
+  const shouldAutoPlayRef = useRef(false);
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -242,6 +243,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       
       if (cachedUri) {
         playerIdRef.current = audioPlayerManager.generatePlayerId();
+        shouldAutoPlayRef.current = true;
         setAudioUri(cachedUri);
       } else {
         setHasError(true);
@@ -256,7 +258,9 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, [uri, audioUri, status, player, isPlaying, isDownloading, hasError]);
 
   useEffect(() => {
-    if (audioUri && status?.isLoaded && !isPlaying) {
+    if (audioUri && status?.isLoaded && !isPlaying && shouldAutoPlayRef.current) {
+      shouldAutoPlayRef.current = false;
+      
       audioPlayerManager.stopCurrent();
       playerIdRef.current = audioPlayerManager.generatePlayerId();
       audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {

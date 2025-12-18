@@ -146,13 +146,12 @@ export function MessageBubble({
   const [isMediaLoaded, setIsMediaLoaded] = useState(isAlreadyKnownLoaded);
   const [isCheckingCache, setIsCheckingCache] = useState(!isAlreadyKnownLoaded && !!mediaKey);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [voiceListenedState, setVoiceListenedState] = useState<boolean>(() => {
+  const [voiceListenedState, setVoiceListenedState] = useState<boolean | null>(() => {
     if (listenedMessagesService.isInitialized()) {
       return listenedMessagesService.isListened(message.id);
     }
-    return false;
+    return null;
   });
-  const [isListenedLoading, setIsListenedLoading] = useState(!listenedMessagesService.isInitialized());
   
   useEffect(() => {
     if (message.type !== "voice") return;
@@ -162,7 +161,6 @@ export function MessageBubble({
     listenedMessagesService.isListenedAsync(message.id).then((listened) => {
       if (mounted) {
         setVoiceListenedState(listened);
-        setIsListenedLoading(false);
       }
     });
     
@@ -178,7 +176,7 @@ export function MessageBubble({
     };
   }, [message.id, message.type]);
   
-  const isVoiceListened = isListenedLoading ? false : voiceListenedState;
+  const isVoiceListened = voiceListenedState === null ? true : voiceListenedState;
   
   const handleVoiceListened = useCallback((messageId: string) => {
     setVoiceListenedState(true);
