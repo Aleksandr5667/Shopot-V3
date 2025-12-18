@@ -7,7 +7,7 @@ const TOKEN_KEY = "@shepot_token";
 const UPLOAD_SESSIONS_KEY = "@shepot_upload_sessions";
 
 export const CHUNKED_UPLOAD_CONFIG = {
-  MAX_FILE_SIZE: 500 * 1024 * 1024,
+  MAX_FILE_SIZE: 150 * 1024 * 1024,
   CHUNK_SIZE: 1 * 1024 * 1024,
   PARALLEL_UPLOADS: 3,
   LARGE_FILE_THRESHOLD: 5 * 1024 * 1024,

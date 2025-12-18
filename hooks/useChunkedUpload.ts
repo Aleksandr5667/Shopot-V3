@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "";
 const TOKEN_KEY = "@shepot_token";
 const UPLOAD_SESSIONS_KEY = "@shepot_upload_sessions";
 
-const MAX_FILE_SIZE = 500 * 1024 * 1024;
+const MAX_FILE_SIZE = 150 * 1024 * 1024;
 const CHUNK_SIZE = 1 * 1024 * 1024;
 const PARALLEL_UPLOADS = 3;
 

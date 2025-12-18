@@ -24,7 +24,7 @@ import { ThemedText } from "./ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-const MAX_FILE_SIZE_MB = 500;
+const MAX_FILE_SIZE_MB = 150;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 const SPRING_CONFIG = {
