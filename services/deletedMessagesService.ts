@@ -38,23 +38,28 @@ class DeletedMessagesService {
     }
   }
 
-  async markAsDeleted(messageId: string): Promise<void> {
+  async markAsDeleted(messageId: string | number): Promise<void> {
     await this.initialize();
-    this.deletedIds.add(messageId);
+    this.deletedIds.add(String(messageId));
     await this.saveToStorage();
+    console.log(`[DeletedMessagesService] Marked ${messageId} as deleted, total: ${this.deletedIds.size}`);
   }
 
-  isDeleted(messageId: string): boolean {
-    return this.deletedIds.has(messageId);
+  isDeleted(messageId: string | number): boolean {
+    return this.deletedIds.has(String(messageId));
   }
 
-  async isDeletedAsync(messageId: string): Promise<boolean> {
+  async isDeletedAsync(messageId: string | number): Promise<boolean> {
     await this.initialize();
-    return this.deletedIds.has(messageId);
+    return this.deletedIds.has(String(messageId));
   }
 
-  filterDeleted<T extends { id: string }>(messages: T[]): T[] {
-    return messages.filter(m => !this.deletedIds.has(m.id));
+  filterDeleted<T extends { id: string | number }>(messages: T[]): T[] {
+    const filtered = messages.filter(m => !this.deletedIds.has(String(m.id)));
+    if (messages.length !== filtered.length) {
+      console.log(`[DeletedMessagesService] Filtered out ${messages.length - filtered.length} deleted messages`);
+    }
+    return filtered;
   }
 
   async clearForChat(chatId: string): Promise<void> {

@@ -952,7 +952,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
     if (welcomeChatService.isWelcomeChat(chatId)) return false;
     const isTemporaryMessage = messageId.startsWith("temp_");
     
-    deletedMessagesService.markAsDeleted(messageId);
+    await deletedMessagesService.markAsDeleted(messageId);
     
     setMessages((prev) => {
       const updated = prev.filter((m) => m.id !== messageId);
@@ -977,8 +977,11 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
     }
   }, [chatId]);
 
-  const hideMessageLocally = useCallback((messageId: string): void => {
+  const hideMessageLocally = useCallback(async (messageId: string): Promise<void> => {
     if (welcomeChatService.isWelcomeChat(chatId)) return;
+    
+    await deletedMessagesService.markAsDeleted(messageId);
+    
     setMessages((prev) => {
       const updated = prev.filter((m) => m.id !== messageId);
       chatCache.saveMessages(chatId, updated);
