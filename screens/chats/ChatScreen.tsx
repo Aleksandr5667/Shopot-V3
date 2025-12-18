@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { messageQueue } from "@/services/messageQueue";
 import { notificationSoundService } from "@/services/notificationSound";
 import { apiService } from "@/services/api";
+import { welcomeChatService } from "@/services/welcomeChat";
 import * as Clipboard from "expo-clipboard";
 import { MessageActionSheet, ActionItem } from "@/components/MessageActionSheet";
 import { SearchBar } from "@/components/SearchBar";
@@ -73,6 +74,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const displayName = isGroup ? (groupName || "Group") : (participant?.displayName || "Chat");
   const avatarColor = isGroup ? "#10B981" : (participant?.avatarColor || "#0088CC");
   const avatarUrl = isGroup ? dynamicGroupAvatarUrl : participant?.avatarUrl;
+  const isWelcomeChat = welcomeChatService.isWelcomeChat(chatId);
 
   useFocusEffect(
     useCallback(() => {
@@ -493,6 +495,18 @@ export default function ChatScreen({ route, navigation }: Props) {
     
     const actions: ActionItem[] = [];
     
+    if (isWelcomeChat) {
+      if (canCopy) {
+        actions.push({
+          id: "copy",
+          label: t("chat.copy"),
+          icon: "copy",
+          onPress: () => handleCopyMessage(message),
+        });
+      }
+      return actions;
+    }
+    
     if (canCopy) {
       actions.push({
         id: "copy",
@@ -537,7 +551,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     });
     
     return actions;
-  }, [selectedMessage, user?.id, t, handleCopyMessage, handleForwardMessage, showDeleteConfirm]);
+  }, [selectedMessage, user?.id, t, handleCopyMessage, handleForwardMessage, showDeleteConfirm, isWelcomeChat]);
 
   const handleSaveEdit = useCallback(() => {
     if (editingMessage && editText.trim()) {
@@ -717,7 +731,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         }}
       />
 
-      {replyingToMessage ? (
+      {!isWelcomeChat && replyingToMessage ? (
         <View style={[styles.replyPanel, { backgroundColor: theme.backgroundSecondary, borderTopColor: theme.inputBorder }]}>
           <View style={[styles.replyIndicator, { backgroundColor: theme.primary }]} />
           <View style={styles.replyContent}>
@@ -737,17 +751,19 @@ export default function ChatScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      <MessageInput
-        onSend={handleSend}
-        onAttachPress={() => setShowMediaPicker(true)}
-        onVoiceMessage={handleVoiceMessage}
-        onTyping={sendTypingIndicator}
-        editingMessage={editingMessage}
-        editText={editText}
-        onEditTextChange={setEditText}
-        onCancelEdit={handleCancelEdit}
-        onSaveEdit={handleSaveEdit}
-      />
+      {!isWelcomeChat ? (
+        <MessageInput
+          onSend={handleSend}
+          onAttachPress={() => setShowMediaPicker(true)}
+          onVoiceMessage={handleVoiceMessage}
+          onTyping={sendTypingIndicator}
+          editingMessage={editingMessage}
+          editText={editText}
+          onEditTextChange={setEditText}
+          onCancelEdit={handleCancelEdit}
+          onSaveEdit={handleSaveEdit}
+        />
+      ) : null}
 
       <MediaPicker
         visible={showMediaPicker}

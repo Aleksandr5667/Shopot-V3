@@ -6,6 +6,7 @@ import { useWebSocket } from "@/contexts/WebSocketContext";
 import { apiService } from "@/services/api";
 import { notificationSoundService } from "@/services/notificationSound";
 import { chatCache } from "@/services/chatCache";
+import { welcomeChatService } from "@/services/welcomeChat";
 
 interface ChatsContextType {
   chats: Chat[];
@@ -70,12 +71,15 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
   const loadFromCache = useCallback(async () => {
     const cached = await chatCache.getChats();
     if (cached && cached.length > 0) {
-      const sortedCached = cached.sort((a, b) => 
-        new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
-      );
-      setChats(sortedCached);
-      setIsLoading(false);
-      return true;
+      const filteredCached = cached.filter(chat => !welcomeChatService.isWelcomeChat(chat.id));
+      if (filteredCached.length > 0) {
+        const sortedCached = filteredCached.sort((a, b) => 
+          new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        );
+        setChats(sortedCached);
+        setIsLoading(false);
+        return true;
+      }
     }
     return false;
   }, []);
@@ -102,7 +106,7 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
             }
           });
           
-          const chatsWithOnlineStatus = sortedChats.map((chat) => {
+          let chatsWithOnlineStatus = sortedChats.map((chat) => {
             if (chat.type === "private" && chat.participant?.visibleId !== undefined) {
               const savedOnlineStatus = onlineStatusMap.get(chat.participant.visibleId);
               if (savedOnlineStatus !== undefined) {
@@ -121,6 +125,21 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
           chatCache.saveChats(chatsWithOnlineStatus);
           return chatsWithOnlineStatus;
         });
+        
+        if (result.data.chats.length === 0) {
+          welcomeChatService.isWelcomeChatDismissed().then((dismissed) => {
+            if (!dismissed) {
+              setChats((currentChats) => {
+                const realChats = currentChats.filter(c => !welcomeChatService.isWelcomeChat(c.id));
+                if (realChats.length === 0) {
+                  const welcomeChat = welcomeChatService.createWelcomeChat();
+                  return [welcomeChat];
+                }
+                return currentChats;
+              });
+            }
+          });
+        }
         
         setHasMoreChats(result.data.pageInfo.hasMore);
         setNextCursor(result.data.pageInfo.nextCursor);
@@ -531,6 +550,12 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const deleteChat = useCallback(async (chatId: string): Promise<boolean> => {
+    if (welcomeChatService.isWelcomeChat(chatId)) {
+      await welcomeChatService.dismissWelcomeChat();
+      setChats((prev) => prev.filter((c) => c.id !== chatId));
+      return true;
+    }
+
     const numericId = parseInt(chatId, 10);
     if (isNaN(numericId)) return false;
 
@@ -579,6 +604,12 @@ export function ChatsProvider({ children }: { children: React.ReactNode }) {
 
   const markAsRead = useCallback((chatId: string) => {
     console.log("[ChatsContext] markAsRead called for chat:", chatId);
+    
+    if (welcomeChatService.isWelcomeChat(chatId)) {
+      setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c)));
+      return;
+    }
+    
     const numericChatId = parseInt(chatId, 10);
     if (!isNaN(numericChatId)) {
       apiService.markChatAsRead(numericChatId).catch((err) => {

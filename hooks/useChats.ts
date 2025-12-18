@@ -7,6 +7,7 @@ import { apiService } from "@/services/api";
 import { notificationSoundService } from "@/services/notificationSound";
 import { chatCache } from "@/services/chatCache";
 import { messageQueue, QueuedMessage } from "@/services/messageQueue";
+import { welcomeChatService } from "@/services/welcomeChat";
 
 type UpdateChatLastMessageFn = (chatId: string, message: Message) => void;
 
@@ -413,6 +414,15 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
 
   const loadFromServer = useCallback(async () => {
     if (!user?.visibleId) return;
+    
+    if (welcomeChatService.isWelcomeChat(chatId)) {
+      const welcomeMessages = welcomeChatService.getWelcomeMessages();
+      setMessages(welcomeMessages);
+      setHasMoreMessages(false);
+      setIsLoading(false);
+      setIsSyncing(false);
+      return;
+    }
     
     try {
       setIsSyncing(true);
@@ -823,6 +833,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
     ) => {
       if (!user?.visibleId) return;
       if (!text && !mediaUri) return;
+      if (welcomeChatService.isWelcomeChat(chatId)) return;
 
       const numericChatId = parseInt(chatId, 10);
       if (isNaN(numericChatId)) return;
@@ -880,6 +891,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
 
   const editMessage = useCallback(
     async (messageId: string, content: string): Promise<boolean> => {
+      if (welcomeChatService.isWelcomeChat(chatId)) return false;
       const numericMessageId = parseInt(messageId, 10);
       if (isNaN(numericMessageId)) return false;
 
@@ -926,6 +938,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
   );
 
   const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    if (welcomeChatService.isWelcomeChat(chatId)) return false;
     const isTemporaryMessage = messageId.startsWith("temp_");
     
     setMessages((prev) => {
@@ -952,6 +965,7 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
   }, [chatId]);
 
   const hideMessageLocally = useCallback((messageId: string): void => {
+    if (welcomeChatService.isWelcomeChat(chatId)) return;
     setMessages((prev) => {
       const updated = prev.filter((m) => m.id !== messageId);
       chatCache.saveMessages(chatId, updated);
@@ -974,13 +988,14 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
   }, [chatId, sendTyping]);
 
   const retryMessage = useCallback(async (messageId: string) => {
+    if (welcomeChatService.isWelcomeChat(chatId)) return;
     setMessages((prev) =>
       prev.map((m) =>
         m.id === messageId ? { ...m, status: "sending" as const, uploadError: false } : m
       )
     );
     await messageQueue.retryFailed(messageId);
-  }, []);
+  }, [chatId]);
 
   const getPendingCount = useCallback(() => {
     const numericChatId = parseInt(chatId, 10);

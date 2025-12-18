@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Chat, Message, Contact } from "@/store/types";
 
+const WELCOME_CHAT_ID = "welcome-chat";
+
 const CACHE_KEYS = {
   CHATS: "@shepot_cache_chats",
   MESSAGES: "@shepot_cache_messages_",
@@ -27,8 +29,9 @@ class ChatCacheService {
 
   async saveChats(chats: Chat[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(CACHE_KEYS.CHATS, JSON.stringify(chats));
-      console.log("[ChatCache] Saved", chats.length, "chats to cache");
+      const filteredChats = chats.filter(chat => chat.id !== WELCOME_CHAT_ID);
+      await AsyncStorage.setItem(CACHE_KEYS.CHATS, JSON.stringify(filteredChats));
+      console.log("[ChatCache] Saved", filteredChats.length, "chats to cache");
     } catch (error) {
       __DEV__ && console.warn("[ChatCache] Error saving chats:", error);
     }
@@ -49,6 +52,9 @@ class ChatCacheService {
   }
 
   async saveMessages(chatId: string, messages: Message[]): Promise<void> {
+    if (chatId === WELCOME_CHAT_ID) {
+      return;
+    }
     try {
       const seen = new Set<string>();
       const deduped = messages.filter(m => {
