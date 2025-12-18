@@ -88,20 +88,33 @@ function NativeVideoPlayer({
 export default function MediaViewerScreen({ route, navigation }: Props) {
   const { uri, type } = route.params;
   const insets = useSafeAreaInsets();
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const quickCached = Platform.OS !== "web" ? mediaCache.getQuickCachedUri(uri) : null;
+  
+  const [cachedMediaUri, setCachedMediaUri] = useState<string | null>(quickCached);
+  const [isLoading, setIsLoading] = useState(!quickCached);
   const [isBuffering, setIsBuffering] = useState(false);
   const [error, setError] = useState(false);
-  const [cachedVideoUri, setCachedVideoUri] = useState<string | null>(null);
 
   useEffect(() => {
-    if (type === "video" && Platform.OS !== "web") {
-      mediaCache.cacheMedia(uri).then((cachedUri) => {
-        setCachedVideoUri(cachedUri);
-      }).catch(() => {
-        setCachedVideoUri(uri);
-      });
+    if (quickCached) {
+      setCachedMediaUri(quickCached);
+      setIsLoading(false);
+      return;
     }
-  }, [uri, type]);
+    
+    if (Platform.OS === "web") {
+      setCachedMediaUri(uri);
+      setIsLoading(false);
+      return;
+    }
+    
+    mediaCache.cacheMedia(uri).then((cached) => {
+      setCachedMediaUri(cached);
+    }).catch(() => {
+      setCachedMediaUri(uri);
+    });
+  }, [uri, quickCached]);
 
   const handleClose = useCallback(() => {
     navigation.goBack();
@@ -156,21 +169,21 @@ export default function MediaViewerScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      {type === "photo" ? (
+      {type === "photo" && cachedMediaUri ? (
         <Image
-          source={{ uri }}
+          source={{ uri: cachedMediaUri }}
           style={styles.imageMedia}
           contentFit="contain"
           onLoad={handleLoad}
           onError={handleError}
         />
-      ) : Platform.OS === "web" ? (
+      ) : type === "video" && Platform.OS === "web" && cachedMediaUri ? (
         <View style={styles.webVideoContainer}>
-          <WebVideoPlayer uri={uri} onLoad={handleLoad} onError={handleError} />
+          <WebVideoPlayer uri={cachedMediaUri} onLoad={handleLoad} onError={handleError} />
         </View>
-      ) : cachedVideoUri ? (
+      ) : type === "video" && cachedMediaUri ? (
         <NativeVideoPlayer 
-          uri={cachedVideoUri}
+          uri={cachedMediaUri}
           videoHeight={videoHeight}
           onLoad={handleLoad}
           onError={handleError}
