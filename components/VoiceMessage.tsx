@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Pressable, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,9 +12,8 @@ import type { SharedValue } from "react-native-reanimated";
 import { ThemedText } from "./ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
-import { mediaCache, DownloadProgress } from "@/services/mediaCache";
 import { useTranslation } from "react-i18next";
-import { audioPlayerManager } from "@/services/audioPlayerManager";
+import { useVoicePlayback } from "@/hooks/useVoicePlayback";
 
 interface VoiceMessageProps {
   uri: string;
@@ -66,18 +64,21 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const { theme } = useTheme();
   const { t } = useTranslation();
   
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
-  const [hasError, setHasError] = useState(false);
-  const [audioUri, setAudioUri] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [hasBeenListened, setHasBeenListened] = useState(initialListened);
-  
-  const playerIdRef = useRef<string>(audioPlayerManager.generatePlayerId());
   const hasMarkedListenedRef = useRef(false);
-  const shouldAutoPlayRef = useRef(false);
-  const isLoadedRef = useRef(false);
   const progress = useSharedValue(0);
+
+  const { 
+    state, 
+    currentTime, 
+    audioDuration, 
+    togglePlayback, 
+    hasError,
+    isLoading 
+  } = useVoicePlayback(uri);
+
+  const isPlaying = state === 'playing';
+  const isDownloading = isLoading;
 
   useEffect(() => {
     setHasBeenListened(initialListened);
@@ -86,48 +87,25 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     }
   }, [initialListened]);
 
-  const player = useAudioPlayer(audioUri ?? undefined);
-  const status = useAudioPlayerStatus(player);
-
   useEffect(() => {
-    isLoadedRef.current = !!status?.isLoaded;
-    console.log("[VoiceMessage] Player/status changed", { 
-      hasPlayer: !!player, 
-      audioUri: audioUri?.substring(0, 50),
-      isLoaded: status?.isLoaded,
-      duration: status?.duration,
-      shouldAutoPlay: shouldAutoPlayRef.current
-    });
-  }, [player, status, audioUri]);
-
-  useEffect(() => {
-    if (player) {
-      player.loop = false;
-    }
-  }, [player]);
-
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-    
-    let mounted = true;
-    
-    const preloadAudio = async () => {
-      try {
-        const cached = await mediaCache.getCachedUri(uri);
-        if (cached && mounted) {
-          setAudioUri(cached);
-        }
-      } catch (error) {
-        // Silent fail for preload
+    if (isPlaying && !hasMarkedListenedRef.current && !hasBeenListened) {
+      hasMarkedListenedRef.current = true;
+      setHasBeenListened(true);
+      if (messageId && onListened) {
+        onListened(messageId);
       }
-    };
-    
-    preloadAudio();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [uri]);
+    }
+  }, [isPlaying, hasBeenListened, messageId, onListened]);
+
+  useEffect(() => {
+    const totalDur = audioDuration > 0 ? audioDuration : duration;
+    if (totalDur > 0) {
+      progress.value = currentTime / totalDur;
+    }
+    if (state === 'idle' && currentTime === 0) {
+      progress.value = 0;
+    }
+  }, [currentTime, audioDuration, duration, state]);
 
   const waveformHeights = useMemo(() => {
     return Array.from({ length: WAVEFORM_BARS }, (_, i) => {
@@ -143,166 +121,11 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     });
   }, []);
 
-  useEffect(() => {
-    if (!status) return;
-    
-    if (status.isLoaded && status.duration > 0) {
-      const currentProgress = status.currentTime / status.duration;
-      progress.value = currentProgress;
-      
-      if (status.playing) {
-        setIsPlaying(true);
-        
-        if (!hasMarkedListenedRef.current && !hasBeenListened) {
-          hasMarkedListenedRef.current = true;
-          setHasBeenListened(true);
-          if (messageId && onListened) {
-            onListened(messageId);
-          }
-        }
-      }
-      
-      const hasReachedEnd = status.currentTime >= status.duration - 0.15;
-      
-      if (!status.playing && isPlaying) {
-        setIsPlaying(false);
-        
-        if (hasReachedEnd) {
-          progress.value = 0;
-          try {
-            player.seekTo(0);
-          } catch (e) {}
-        }
-        
-        audioPlayerManager.unregisterPlayer(playerIdRef.current);
-      }
-    }
-  }, [status?.currentTime, status?.duration, status?.playing, status?.isLoaded]);
-
-  useEffect(() => {
-    if (!audioPlayerManager.isCurrentPlayer(playerIdRef.current) && isPlaying) {
-      setIsPlaying(false);
-      progress.value = 0;
-    }
-  }, [status?.playing]);
-
-  useEffect(() => {
-    const playerId = playerIdRef.current;
-    return () => {
-      audioPlayerManager.unregisterPlayer(playerId);
-    };
-  }, []);
-
   const handlePress = useCallback(async () => {
-    const currentIsLoaded = isLoadedRef.current;
-    console.log("[VoiceMessage] handlePress called", { platform: Platform.OS, isDownloading, hasError, audioUri: !!audioUri, isLoaded: currentIsLoaded });
-    
-    if (Platform.OS === "web") {
-      console.log("[VoiceMessage] Blocked on web");
-      return;
-    }
-    if (isDownloading) {
-      console.log("[VoiceMessage] Already downloading");
-      return;
-    }
-    
-    if (hasError) {
-      setHasError(false);
-    }
-
-    if (audioUri && currentIsLoaded) {
-      if (isPlaying) {
-        try {
-          player.pause();
-          setIsPlaying(false);
-          audioPlayerManager.unregisterPlayer(playerIdRef.current);
-        } catch (e) {
-          setIsPlaying(false);
-        }
-      } else {
-        try {
-          audioPlayerManager.stopCurrent();
-          playerIdRef.current = audioPlayerManager.generatePlayerId();
-          audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
-            setIsPlaying(false);
-          });
-          
-          if (status.currentTime >= status.duration - 0.15) {
-            player.seekTo(0);
-          }
-          
-          player.play();
-          setIsPlaying(true);
-        } catch (error: any) {
-          setIsPlaying(false);
-          if (error?.message?.includes("Session") || error?.message?.includes("dead")) {
-            setAudioUri(null);
-          }
-        }
-      }
-      return;
-    }
-
-    setIsDownloading(true);
-    setDownloadProgress(null);
-    
-    try {
-      await setAudioModeAsync({
-        allowsRecording: false,
-        playsInSilentMode: true,
-      });
-    } catch (e) {}
-
-    try {
-      let cachedUri = await mediaCache.getCachedUri(uri);
-      
-      if (!cachedUri) {
-        cachedUri = await mediaCache.cacheMedia(uri, (info) => {
-          setDownloadProgress(info);
-        });
-      }
-      
-      if (cachedUri) {
-        console.log("[VoiceMessage] Got cached URI, setting autoplay flag");
-        playerIdRef.current = audioPlayerManager.generatePlayerId();
-        shouldAutoPlayRef.current = true;
-        setAudioUri(cachedUri);
-      } else {
-        console.log("[VoiceMessage] No cached URI, setting error");
-        setHasError(true);
-      }
-    } catch (error) {
-      console.warn("[VoiceMessage] Download failed:", error);
-      setHasError(true);
-    } finally {
-      setIsDownloading(false);
-      setDownloadProgress(null);
-    }
-  }, [uri, audioUri, status, player, isPlaying, isDownloading, hasError]);
-
-  useEffect(() => {
-    console.log("[VoiceMessage] Auto-play effect", { audioUri: !!audioUri, isLoaded: status?.isLoaded, shouldAutoPlay: shouldAutoPlayRef.current, isPlaying });
-    
-    if (!audioUri || !status || !status.isLoaded) return;
-    if (!shouldAutoPlayRef.current) return;
-    if (isPlaying) return;
-    
-    console.log("[VoiceMessage] Starting auto-play");
-    shouldAutoPlayRef.current = false;
-    
-    audioPlayerManager.stopCurrent();
-    playerIdRef.current = audioPlayerManager.generatePlayerId();
-    audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
-      setIsPlaying(false);
-    });
-    
-    try {
-      player.play();
-      setIsPlaying(true);
-    } catch (e) {
-      setIsPlaying(false);
-    }
-  }, [audioUri, status, isPlaying, player]);
+    if (Platform.OS === "web") return;
+    if (isLoading) return;
+    await togglePlayback();
+  }, [togglePlayback, isLoading]);
 
   const playButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withTiming(isPlaying ? 0.95 : 1, { duration: 150 }) }],
@@ -376,28 +199,8 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     );
   };
   
-  const renderDownloadInfo = () => {
-    if (!isDownloading || !downloadProgress || downloadProgress.bytesTotal === 0) return null;
-    
-    return (
-      <View style={styles.downloadInfoContainer}>
-        <View style={styles.downloadProgressBar}>
-          <Animated.View 
-            style={[
-              styles.downloadProgressFill, 
-              { 
-                width: `${downloadProgress.progress * 100}%`,
-                backgroundColor: primaryColor,
-              }
-            ]} 
-          />
-        </View>
-      </View>
-    );
-  };
-
-  const displayDuration = status?.duration > 0 ? status.duration : duration;
-  const currentPosition = status?.currentTime || 0;
+  const displayDuration = audioDuration > 0 ? audioDuration : duration;
+  const currentPosition = currentTime;
 
   return (
     <View style={styles.container}>
@@ -414,9 +217,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       </Pressable>
 
       <View style={styles.contentContainer}>
-        {isDownloading && downloadProgress && downloadProgress.bytesTotal > 0 ? (
-          renderDownloadInfo()
-        ) : hasError ? (
+        {hasError ? (
           <View style={styles.errorContainer}>
             <ThemedText
               type="caption"

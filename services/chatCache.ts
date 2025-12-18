@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Chat, Message, Contact } from "@/store/types";
+import { deletedMessagesService } from "./deletedMessagesService";
 
 const WELCOME_CHAT_ID = "welcome-chat";
 
@@ -39,12 +40,14 @@ class ChatCacheService {
 
   async getMessages(chatId: string): Promise<Message[] | null> {
     try {
+      await deletedMessagesService.initialize();
       const data = await AsyncStorage.getItem(CACHE_KEYS.MESSAGES + chatId);
       if (!data) return null;
       
-      const parsed = JSON.parse(data);
-      console.log("[ChatCache] Loaded", parsed.length, "messages for chat", chatId);
-      return parsed;
+      const parsed = JSON.parse(data) as Message[];
+      const filtered = parsed.filter(m => !deletedMessagesService.isDeleted(m.id));
+      console.log("[ChatCache] Loaded", filtered.length, "messages for chat", chatId, "(filtered from", parsed.length, ")");
+      return filtered;
     } catch (error) {
       __DEV__ && console.warn("[ChatCache] Error loading messages:", error);
       return null;
@@ -56,9 +59,11 @@ class ChatCacheService {
       return;
     }
     try {
+      await deletedMessagesService.initialize();
       const seen = new Set<string>();
       const deduped = messages.filter(m => {
         if (seen.has(m.id)) return false;
+        if (deletedMessagesService.isDeleted(m.id)) return false;
         seen.add(m.id);
         return true;
       });
@@ -75,6 +80,11 @@ class ChatCacheService {
 
   async appendMessage(chatId: string, message: Message): Promise<void> {
     try {
+      await deletedMessagesService.initialize();
+      if (deletedMessagesService.isDeleted(message.id)) {
+        console.log("[ChatCache] Skipping deleted message:", message.id);
+        return;
+      }
       const messages = await this.getMessages(chatId) || [];
       if (!messages.some(m => m.id === message.id)) {
         messages.push(message);

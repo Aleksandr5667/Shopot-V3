@@ -566,6 +566,12 @@ export function useMessages(chatId: string, updateChatLastMessage?: UpdateChatLa
         }
         if (serverMessage.chatId === numericChatId) {
           const message = apiService.serverMessageToMessage(serverMessage, user.visibleId!);
+          
+          if (deletedMessagesService.isDeleted(message.id)) {
+            console.log("[useMessages] Ignoring deleted message:", message.id);
+            return;
+          }
+          
           const isOwnMessage = serverMessage.senderId === user.visibleId;
           
           setMessages((prev) => {
