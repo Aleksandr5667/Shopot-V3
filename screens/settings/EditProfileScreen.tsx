@@ -295,7 +295,7 @@ export default function EditProfileScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   content: {
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xl + 60,
   },
   avatarWrapper: {
     marginHorizontal: Spacing.lg,
@@ -344,13 +344,15 @@ const styles = StyleSheet.create({
   },
   colorPicker: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     marginTop: Spacing.md,
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   colorOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 3,
   },
   formSection: {
