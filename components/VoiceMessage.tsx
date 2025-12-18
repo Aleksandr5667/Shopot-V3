@@ -182,8 +182,16 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, []);
 
   const handlePress = useCallback(async () => {
-    if (Platform.OS === "web") return;
-    if (isDownloading) return;
+    console.log("[VoiceMessage] handlePress called", { platform: Platform.OS, isDownloading, hasError, audioUri: !!audioUri, isLoaded: status?.isLoaded });
+    
+    if (Platform.OS === "web") {
+      console.log("[VoiceMessage] Blocked on web");
+      return;
+    }
+    if (isDownloading) {
+      console.log("[VoiceMessage] Already downloading");
+      return;
+    }
     
     if (hasError) {
       setHasError(false);
@@ -242,10 +250,12 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       }
       
       if (cachedUri) {
+        console.log("[VoiceMessage] Got cached URI, setting autoplay flag");
         playerIdRef.current = audioPlayerManager.generatePlayerId();
         shouldAutoPlayRef.current = true;
         setAudioUri(cachedUri);
       } else {
+        console.log("[VoiceMessage] No cached URI, setting error");
         setHasError(true);
       }
     } catch (error) {
@@ -258,10 +268,13 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, [uri, audioUri, status, player, isPlaying, isDownloading, hasError]);
 
   useEffect(() => {
+    console.log("[VoiceMessage] Auto-play effect", { audioUri: !!audioUri, isLoaded: status?.isLoaded, shouldAutoPlay: shouldAutoPlayRef.current, isPlaying });
+    
     if (!audioUri || !status || !status.isLoaded) return;
     if (!shouldAutoPlayRef.current) return;
     if (isPlaying) return;
     
+    console.log("[VoiceMessage] Starting auto-play");
     shouldAutoPlayRef.current = false;
     
     audioPlayerManager.stopCurrent();
