@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Legal">;
 
@@ -333,7 +334,7 @@ Email: support@shepot.online`;
       style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + Spacing.xl },
+        { paddingBottom: getAndroidBottomInset(insets.bottom) + Spacing.xl },
       ]}
     >
       <ThemedText style={styles.text}>{getContent()}</ThemedText>

@@ -5,6 +5,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -349,7 +350,7 @@ export function CreateGroupScreen() {
               data={allContacts}
               keyExtractor={(item) => item.id || String(item.visibleId)}
               renderItem={renderContact}
-              contentContainerStyle={styles.list}
+              contentContainerStyle={[styles.list, { paddingBottom: getAndroidBottomInset(insets.bottom) + Spacing.xl }]}
               ItemSeparatorComponent={() => (
                 <View style={[styles.divider, { backgroundColor: theme.divider, marginLeft: Spacing.lg + 40 + Spacing.md }]} />
               )}

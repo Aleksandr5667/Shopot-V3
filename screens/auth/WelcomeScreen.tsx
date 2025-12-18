@@ -2,6 +2,7 @@ import React, { useEffect, useCallback } from "react";
 import { View, StyleSheet, Image, Pressable } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -159,7 +160,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           styles.container,
           {
             paddingTop: insets.top + Spacing["3xl"],
-            paddingBottom: insets.bottom + Spacing.xl,
+            paddingBottom: getAndroidBottomInset(insets.bottom) + Spacing.xl,
           },
         ]}
       >

@@ -11,6 +11,7 @@ import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 import { Feather } from "@expo/vector-icons";
 import { ChatsStackParamList } from "@/navigation/types";
 import { ThemedText } from "@/components/ThemedText";
@@ -119,7 +120,7 @@ export default function MediaViewerScreen({ route, navigation }: Props) {
     setIsBuffering(buffering);
   }, []);
 
-  const videoHeight = SCREEN_HEIGHT - insets.top - insets.bottom - 80;
+  const videoHeight = SCREEN_HEIGHT - insets.top - getAndroidBottomInset(insets.bottom) - 80;
 
   return (
     <View style={styles.container}>

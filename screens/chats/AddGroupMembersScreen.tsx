@@ -15,6 +15,7 @@ import type { RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
@@ -385,7 +386,7 @@ export function AddGroupMembersScreen() {
             data={displayList}
             keyExtractor={(item) => item.id}
             renderItem={renderUser}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[styles.list, { paddingBottom: getAndroidBottomInset(insets.bottom) + Spacing.xl + 70 }]}
             ItemSeparatorComponent={() => (
               <View style={[styles.divider, { backgroundColor: theme.divider, marginLeft: Spacing.lg + 40 + Spacing.md }]} />
             )}
@@ -416,7 +417,7 @@ export function AddGroupMembersScreen() {
             styles.addButton,
             { 
               backgroundColor: isAdding ? theme.textSecondary : theme.primary,
-              bottom: Math.max(insets.bottom, Spacing.lg) + Spacing.lg,
+              bottom: getAndroidBottomInset(insets.bottom) + Spacing.lg,
             },
             pressed ? { opacity: 0.8 } : {},
           ]}

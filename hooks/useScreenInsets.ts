@@ -6,6 +6,12 @@ import { Spacing } from "@/constants/theme";
 
 export const ANDROID_NAVIGATION_BAR_HEIGHT = 48;
 
+export function getAndroidBottomInset(insetBottom: number): number {
+  return Platform.OS === "android" 
+    ? Math.max(insetBottom, ANDROID_NAVIGATION_BAR_HEIGHT)
+    : insetBottom;
+}
+
 interface ScreenInsetsOptions {
   topSpacing?: number;
   bottomSpacing?: number;

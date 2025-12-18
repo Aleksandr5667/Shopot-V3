@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useMemo } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAndroidBottomInset } from "@/hooks/useScreenInsets";
 import { useNavigation, DrawerActions, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -285,7 +286,7 @@ export default function ChatsListScreen() {
             styles.listContent,
             {
               paddingTop: insets.top + (isSearchMode ? 100 : 56),
-              paddingBottom: insets.bottom + Spacing.xl + 70,
+              paddingBottom: getAndroidBottomInset(insets.bottom) + Spacing.xl + 70,
             },
           ]}
           refreshControl={
