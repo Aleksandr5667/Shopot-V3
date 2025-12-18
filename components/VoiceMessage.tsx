@@ -257,6 +257,8 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const loadAndPlay = useCallback(async () => {
     if (Platform.OS === "web") return;
 
+    console.log("[VoiceMessage] loadAndPlay called, audioSource:", audioSource?.substring(0, 50), "isLoaded:", status?.isLoaded);
+
     if (audioSource && status?.isLoaded) {
       try {
         if (isPlaying) {
@@ -305,6 +307,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       if (!audioUri) {
         setIsLoading(true);
         setDownloadInfo(null);
+        console.log("[VoiceMessage] Downloading from server:", uri.substring(0, 50));
         audioUri = await mediaCache.cacheMedia(uri, (info) => {
           setDownloadInfo(info);
         });
@@ -312,6 +315,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
         setIsLoading(false);
       }
 
+      console.log("[VoiceMessage] Playing from:", audioUri.substring(0, 80));
       playerIdRef.current = audioPlayerManager.generatePlayerId();
       wasLoadedRef.current = false;
       hasFinishedRef.current = false;
@@ -319,9 +323,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       setAudioSource(audioUri);
       setPendingPlay(true);
     } catch (error: any) {
-      if (__DEV__) {
-        console.warn("[VoiceMessage] Audio unavailable:", uri);
-      }
+      console.warn("[VoiceMessage] Audio unavailable:", uri, error?.message);
       setHasError(true);
       setIsLoading(false);
     }
