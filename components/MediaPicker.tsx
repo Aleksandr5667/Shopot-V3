@@ -142,10 +142,18 @@ export function MediaPicker({
         onClose();
       }
     } catch (error: any) {
-      console.error("Error picking video:", error);
-      if (error?.message?.includes("PHPhotos") || error?.code === "E_PICKER_CANCELLED") {
+      const errorMessage = error?.message || "";
+      const isExpectedError = 
+        errorMessage.includes("PHPhotos") || 
+        errorMessage.includes("3164") ||
+        errorMessage.includes("cancelled") ||
+        error?.code === "E_PICKER_CANCELLED";
+      
+      if (isExpectedError) {
         return;
       }
+      
+      console.error("Error picking video:", error);
       Alert.alert(
         t("errors.videoPickerError"),
         t("errors.tryAgain")
