@@ -26,9 +26,9 @@ interface VoiceMessageProps {
   onListened?: (messageId: string) => void;
 }
 
-const WAVEFORM_BARS = 28;
+const WAVEFORM_BARS = 32;
 const BAR_WIDTH = 3;
-const BAR_GAP = 2;
+const BAR_GAP = 1.5;
 
 interface WaveformBarProps {
   index: number;
@@ -137,12 +137,14 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const waveformHeights = useMemo(() => {
     return Array.from({ length: WAVEFORM_BARS }, (_, i) => {
       const normalizedPos = i / WAVEFORM_BARS;
-      const wave1 = Math.sin(normalizedPos * Math.PI * 2) * 0.3;
-      const wave2 = Math.sin(normalizedPos * Math.PI * 4 + 0.5) * 0.2;
-      const wave3 = Math.cos(normalizedPos * Math.PI * 3) * 0.15;
-      const randomness = (Math.sin(i * 13.7) * 0.5 + 0.5) * 0.35;
-      const base = 0.25 + wave1 + wave2 + wave3 + randomness;
-      return Math.max(0.15, Math.min(1, base));
+      const centerFactor = 1 - Math.abs(normalizedPos - 0.5) * 1.2;
+      const wave1 = Math.sin(normalizedPos * Math.PI * 3) * 0.25;
+      const wave2 = Math.sin(normalizedPos * Math.PI * 5 + 0.8) * 0.15;
+      const wave3 = Math.cos(normalizedPos * Math.PI * 7) * 0.1;
+      const seed = (i * 17 + 13) % 23;
+      const randomness = (seed / 23) * 0.2;
+      const base = 0.3 + centerFactor * 0.35 + wave1 + wave2 + wave3 + randomness;
+      return Math.max(0.2, Math.min(1, base));
     });
   }, []);
 
@@ -294,8 +296,21 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     transform: [{ scale: withTiming(status?.playing ? 0.95 : 1, { duration: 150 }) }],
   }));
 
-  const primaryColor = hasError ? "#FF6B6B" : isOwn ? theme.primary : "#7C7C7C";
-  const secondaryColor = hasError ? "#FF6B6B40" : isOwn ? `${theme.primary}40` : "#D0D0D0";
+  const unlistenedBlue = "#007AFF";
+  const primaryColor = hasError 
+    ? "#FF6B6B" 
+    : isOwn 
+      ? theme.primary 
+      : !hasBeenListened 
+        ? unlistenedBlue 
+        : "#8E8E93";
+  const secondaryColor = hasError 
+    ? "#FF6B6B40" 
+    : isOwn 
+      ? `${theme.primary}40` 
+      : !hasBeenListened 
+        ? `${unlistenedBlue}35`
+        : "#C7C7CC";
 
   const spinValue = useSharedValue(0);
   
@@ -366,15 +381,8 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const displayDuration = status?.duration > 0 ? status.duration : duration;
   const currentPosition = status?.currentTime || 0;
 
-  // Background color for unlistened incoming voice messages
-  const showUnlistenedBackground = !isOwn && !hasBeenListened;
-  const unlistenedBgColor = `${theme.primary}15`; // 15% opacity
-
   return (
-    <View style={[
-      styles.container,
-      showUnlistenedBackground ? { backgroundColor: unlistenedBgColor, borderRadius: 12, marginHorizontal: -8, paddingHorizontal: 8 } : null,
-    ]}>
+    <View style={styles.container}>
       <Pressable onPress={hasError || isLoading ? undefined : loadAndPlay}>
         <Animated.View
           style={[
