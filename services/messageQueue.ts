@@ -177,6 +177,36 @@ class MessageQueueService {
 
     try {
       let mediaUrl = message.mediaUrl;
+      let thumbnailUrl = message.thumbnailUrl;
+
+      if (message.mediaUri && !thumbnailUrl && (message.type === "image" || message.type === "video")) {
+        try {
+          console.log(`[MessageQueue] Generating thumbnail for ${message.type} BEFORE main upload`);
+          const thumbnailUri = await thumbnailService.generateThumbnail(
+            message.mediaUri,
+            message.type
+          );
+          
+          if (thumbnailUri) {
+            console.log("[MessageQueue] Uploading thumbnail first...");
+            const thumbResult = await apiService.uploadMedia(
+              thumbnailUri,
+              "image",
+              undefined,
+              "images"
+            );
+            
+            if (thumbResult.success && thumbResult.data) {
+              thumbnailUrl = thumbResult.data;
+              this.queue[index].thumbnailUrl = thumbnailUrl;
+              console.log("[MessageQueue] Thumbnail uploaded successfully:", thumbnailUrl);
+              await this.saveQueue();
+            }
+          }
+        } catch (thumbError) {
+          console.warn("[MessageQueue] Thumbnail generation/upload failed:", thumbError);
+        }
+      }
 
       if (message.mediaUri && !mediaUrl && message.type !== "text") {
         this.queue[index].status = "uploading";
@@ -250,36 +280,6 @@ class MessageQueueService {
           } else {
             throw new Error("Upload failed");
           }
-        }
-      }
-
-      let thumbnailUrl = message.thumbnailUrl;
-      
-      if (message.mediaUri && !thumbnailUrl && (message.type === "image" || message.type === "video")) {
-        try {
-          console.log(`[MessageQueue] Generating thumbnail for ${message.type}`);
-          const thumbnailUri = await thumbnailService.generateThumbnail(
-            message.mediaUri,
-            message.type
-          );
-          
-          if (thumbnailUri) {
-            console.log("[MessageQueue] Uploading thumbnail...");
-            const thumbResult = await apiService.uploadMedia(
-              thumbnailUri,
-              "image",
-              undefined,
-              "thumbnails"
-            );
-            
-            if (thumbResult.success && thumbResult.data) {
-              thumbnailUrl = thumbResult.data;
-              this.queue[index].thumbnailUrl = thumbnailUrl;
-              console.log("[MessageQueue] Thumbnail uploaded:", thumbnailUrl);
-            }
-          }
-        } catch (thumbError) {
-          console.warn("[MessageQueue] Thumbnail generation/upload failed:", thumbError);
         }
       }
 
