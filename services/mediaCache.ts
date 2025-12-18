@@ -26,6 +26,7 @@ class MediaCacheService {
   private manifest: CacheManifest = { entries: {}, totalSize: 0 };
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private verifiedPaths: Set<string> = new Set();
 
   private async ensureInitialized(): Promise<void> {
     if (this.initialized) return;
@@ -121,6 +122,22 @@ class MediaCacheService {
     return CACHE_DIR + key;
   }
 
+  getQuickCachedUri(url: string): string | null {
+    if (Platform.OS === "web") return null;
+    if (!this.initialized) return null;
+    
+    const key = this.getCacheKey(url);
+    const entry = this.manifest.entries[key];
+    
+    if (!entry) return null;
+    
+    if (this.verifiedPaths.has(entry.uri)) {
+      return entry.uri;
+    }
+    
+    return null;
+  }
+
   async getCachedUri(url: string): Promise<string | null> {
     if (Platform.OS === "web") return null;
     
@@ -134,10 +151,16 @@ class MediaCacheService {
       return null;
     }
 
+    if (this.verifiedPaths.has(entry.uri)) {
+      entry.timestamp = Date.now();
+      return entry.uri;
+    }
+
     try {
       const info = await FileSystem.getInfoAsync(entry.uri);
       if (info.exists) {
         console.log("[MediaCache] Cache HIT for:", key, "size:", this.formatCacheSize(entry.size));
+        this.verifiedPaths.add(entry.uri);
         entry.timestamp = Date.now();
         await this.saveManifest();
         return entry.uri;
@@ -219,6 +242,7 @@ class MediaCacheService {
           size,
         };
         this.manifest.totalSize += size;
+        this.verifiedPaths.add(result.uri);
 
         await this.saveManifest();
         await this.enforceMaxSize();

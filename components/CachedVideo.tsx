@@ -22,11 +22,20 @@ export function CachedVideo({
   thumbnailUrl,
 }: CachedVideoProps) {
   const { theme } = useTheme();
-  const [cachedUri, setCachedUri] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const quickCached = Platform.OS !== "web" ? mediaCache.getQuickCachedUri(source.uri) : null;
+  
+  const [cachedUri, setCachedUri] = useState<string | null>(quickCached);
+  const [isLoading, setIsLoading] = useState(!quickCached && Platform.OS !== "web");
   const [downloadInfo, setDownloadInfo] = useState<DownloadProgress | null>(null);
 
   useEffect(() => {
+    if (quickCached) {
+      setCachedUri(quickCached);
+      setIsLoading(false);
+      return;
+    }
+    
     let mounted = true;
 
     const cacheVideo = async () => {
@@ -64,7 +73,7 @@ export function CachedVideo({
     return () => {
       mounted = false;
     };
-  }, [source.uri]);
+  }, [source.uri, quickCached]);
 
   if (isLoading) {
     const progressPercent = downloadInfo ? downloadInfo.progress * 100 : 0;
