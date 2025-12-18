@@ -129,15 +129,20 @@ class MediaCacheService {
     const key = this.getCacheKey(url);
     const entry = this.manifest.entries[key];
 
-    if (!entry) return null;
+    if (!entry) {
+      console.log("[MediaCache] Cache MISS for:", key);
+      return null;
+    }
 
     try {
       const info = await FileSystem.getInfoAsync(entry.uri);
       if (info.exists) {
+        console.log("[MediaCache] Cache HIT for:", key, "size:", this.formatCacheSize(entry.size));
         entry.timestamp = Date.now();
         await this.saveManifest();
         return entry.uri;
       } else {
+        console.log("[MediaCache] Cache file missing for:", key);
         this.manifest.totalSize -= entry.size;
         if (this.manifest.totalSize < 0) this.manifest.totalSize = 0;
         delete this.manifest.entries[key];
@@ -201,9 +206,12 @@ class MediaCacheService {
         const size = (info as any).size || 0;
 
         if (size < 100) {
+          console.log("[MediaCache] Downloaded file too small, discarding:", size, "bytes");
           await FileSystem.deleteAsync(result.uri, { idempotent: true });
           return url;
         }
+
+        console.log("[MediaCache] Downloaded and cached:", key, "size:", this.formatCacheSize(size));
 
         this.manifest.entries[key] = {
           uri: result.uri,
@@ -218,7 +226,7 @@ class MediaCacheService {
         return result.uri;
       }
     } catch (error) {
-      if (__DEV__) console.warn("[MediaCache] Download error:", error);
+      console.warn("[MediaCache] Download error:", error);
     }
 
     return url;
