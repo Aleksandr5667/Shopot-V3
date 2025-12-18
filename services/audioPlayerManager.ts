@@ -18,14 +18,12 @@ class AudioPlayerManager {
       try {
         this.currentPlayer.pause();
       } catch (error) {
-        console.warn("[AudioPlayerManager] Failed to pause previous player:", error);
       }
       
       if (this.currentStopCallback) {
         try {
           this.currentStopCallback();
         } catch (e) {
-          console.warn("[AudioPlayerManager] Stop callback failed:", e);
         }
         this.currentStopCallback = null;
       }
@@ -53,14 +51,12 @@ class AudioPlayerManager {
       try {
         this.currentPlayer.pause();
       } catch (error) {
-        console.warn("[AudioPlayerManager] Failed to stop current player:", error);
       }
       
       if (this.currentStopCallback) {
         try {
           this.currentStopCallback();
         } catch (e) {
-          console.warn("[AudioPlayerManager] Stop callback failed:", e);
         }
       }
       

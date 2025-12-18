@@ -70,7 +70,6 @@ class MediaCacheService {
         this.recalculateTotalSize();
       }
     } catch (error) {
-      console.log("[MediaCache] No existing manifest, starting fresh");
       this.manifest = { entries: {}, totalSize: 0 };
     }
   }
@@ -81,7 +80,6 @@ class MediaCacheService {
       calculatedSize += entry.size || 0;
     }
     if (this.manifest.totalSize !== calculatedSize) {
-      console.log(`[MediaCache] Fixed totalSize: ${this.manifest.totalSize} -> ${calculatedSize}`);
       this.manifest.totalSize = calculatedSize;
     }
   }
@@ -158,17 +156,14 @@ class MediaCacheService {
     if (Platform.OS === "web") return url;
     
     if (!url || typeof url !== "string") {
-      console.warn("[MediaCache] Invalid URL:", url);
       return url;
     }
     
     if (url.startsWith("file://") || url.startsWith("content://")) {
-      console.log("[MediaCache] Local file, skipping cache:", url.substring(0, 50));
       return url;
     }
     
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      console.warn("[MediaCache] Unsupported URL scheme:", url.substring(0, 50));
       return url;
     }
     
@@ -176,14 +171,11 @@ class MediaCacheService {
 
     const cached = await this.getCachedUri(url);
     if (cached) {
-      console.log("[MediaCache] Using cached:", cached);
       return cached;
     }
 
     const key = this.getCacheKey(url);
     const cachePath = this.getCachePath(key);
-
-    console.log("[MediaCache] Downloading:", url.substring(0, 100));
 
     try {
       const downloadResumable = FileSystem.createDownloadResumable(
@@ -209,7 +201,6 @@ class MediaCacheService {
         const size = (info as any).size || 0;
 
         if (size < 100) {
-          console.warn("[MediaCache] Downloaded file too small, skipping cache");
           await FileSystem.deleteAsync(result.uri, { idempotent: true });
           return url;
         }
@@ -224,7 +215,6 @@ class MediaCacheService {
         await this.saveManifest();
         await this.enforceMaxSize();
 
-        console.log("[MediaCache] Cached successfully:", result.uri, "size:", size);
         return result.uri;
       }
     } catch (error) {
@@ -292,7 +282,6 @@ class MediaCacheService {
         this.manifest.totalSize -= entry.size;
         delete this.manifest.entries[key];
         await this.saveManifest();
-        console.log("[MediaCache] Removed corrupted cache entry:", key);
       }
     } catch (error) {
       if (__DEV__) console.warn("[MediaCache] Remove entry error:", error);
@@ -307,7 +296,6 @@ class MediaCacheService {
       await FileSystem.makeDirectoryAsync(CACHE_DIR, { intermediates: true });
       this.manifest = { entries: {}, totalSize: 0 };
       await this.saveManifest();
-      console.log("[MediaCache] Cache cleared");
     } catch (error) {
       if (__DEV__) console.warn("[MediaCache] Clear cache error:", error);
     }
@@ -324,7 +312,6 @@ class MediaCacheService {
       const key = this.getCacheKey(serverUrl);
       
       if (this.manifest.entries[key]) {
-        console.log("[MediaCache] Already cached for URL:", serverUrl.substring(0, 50));
         return;
       }
 
@@ -332,7 +319,6 @@ class MediaCacheService {
 
       const sourceInfo = await FileSystem.getInfoAsync(localUri);
       if (!sourceInfo.exists) {
-        console.warn("[MediaCache] Source file does not exist:", localUri);
         return;
       }
 
@@ -352,7 +338,6 @@ class MediaCacheService {
       this.manifest.totalSize += size;
 
       await this.saveManifest();
-      console.log("[MediaCache] Pre-cached local file:", localUri.substring(0, 50), "->", key);
     } catch (error) {
       if (__DEV__) console.warn("[MediaCache] Pre-cache error:", error);
     }

@@ -169,7 +169,6 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
         player.play();
         setIsPlaying(true);
       } catch (error) {
-        console.warn("[VoiceMessage] Play failed:", error);
         setIsPlaying(false);
       }
     }
@@ -225,7 +224,6 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
           player.seekTo(0);
           player.pause();
         } catch (error) {
-          console.warn("[VoiceMessage] Reset failed:", error);
         }
         audioPlayerManager.unregisterPlayer(playerIdRef.current);
       }
@@ -241,7 +239,6 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
             player.seekTo(0);
             player.pause();
           } catch (error) {
-            console.warn("[VoiceMessage] Reset failed:", error);
           }
           audioPlayerManager.unregisterPlayer(playerIdRef.current);
         }
@@ -258,9 +255,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const loadAndPlay = useCallback(async () => {
     if (Platform.OS === "web") return;
 
-    // If already loading audio, ignore tap
     if (isLoadingAudio || pendingPlay) {
-      console.log("[VoiceMessage] Already loading, ignoring tap");
       return;
     }
 
@@ -286,11 +281,8 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
           setIsPlaying(true);
         }
       } catch (error: any) {
-        console.warn("[VoiceMessage] Playback control failed:", error?.message);
         setIsPlaying(false);
-        // Reset player on session errors to allow reload
         if (error?.message?.includes("Session") || error?.message?.includes("Server was dead")) {
-          console.log("[VoiceMessage] Resetting audio source due to session error");
           setAudioSource(null);
           setPendingPlay(false);
           wasLoadedRef.current = false;
@@ -299,9 +291,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       return;
     }
 
-    // If audio source is set but not loaded yet, just wait
     if (audioSource && !status?.isLoaded) {
-      console.log("[VoiceMessage] Audio source set, waiting for load...");
       setPendingPlay(true);
       return;
     }
@@ -329,15 +319,12 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       if (!audioUri) {
         setIsLoading(true);
         setDownloadInfo(null);
-        console.log("[VoiceMessage] Downloading from server:", uri.substring(0, 50));
         audioUri = await mediaCache.cacheMedia(uri, (info) => {
           setDownloadInfo(info);
         });
         setCachedUri(audioUri);
         setIsLoading(false);
       }
-
-      console.log("[VoiceMessage] Playing from:", audioUri.substring(0, 80));
       playerIdRef.current = audioPlayerManager.generatePlayerId();
       wasLoadedRef.current = false;
       hasFinishedRef.current = false;
@@ -345,7 +332,6 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       setAudioSource(audioUri);
       setPendingPlay(true);
     } catch (error: any) {
-      console.warn("[VoiceMessage] Audio unavailable:", uri, error?.message);
       setHasError(true);
       setIsLoading(false);
     } finally {
