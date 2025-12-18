@@ -88,7 +88,7 @@ function GlassButton({
           <View 
             style={[
               StyleSheet.absoluteFill, 
-              { backgroundColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.7)" }
+              { backgroundColor: isDark ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }
             ]} 
           />
         )

@@ -366,8 +366,15 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const displayDuration = status?.duration > 0 ? status.duration : duration;
   const currentPosition = status?.currentTime || 0;
 
+  // Background color for unlistened incoming voice messages
+  const showUnlistenedBackground = !isOwn && !hasBeenListened;
+  const unlistenedBgColor = `${theme.primary}15`; // 15% opacity
+
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      showUnlistenedBackground ? { backgroundColor: unlistenedBgColor, borderRadius: 12, marginHorizontal: -8, paddingHorizontal: 8 } : null,
+    ]}>
       <Pressable onPress={hasError || isLoading ? undefined : loadAndPlay}>
         <Animated.View
           style={[
@@ -414,9 +421,6 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
               >
                 {status?.playing ? formatDuration(currentPosition) : formatDuration(displayDuration)}
               </ThemedText>
-              {!isOwn && !hasBeenListened ? (
-                <View style={[styles.unlistenedDot, { backgroundColor: theme.primary }]} />
-              ) : null}
             </View>
           </>
         )}
@@ -465,12 +469,6 @@ const styles = StyleSheet.create({
   duration: {
     fontSize: 12,
     fontWeight: "500",
-  },
-  unlistenedDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginLeft: 6,
   },
   loadingContainer: {
     alignItems: "center",
