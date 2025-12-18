@@ -24,7 +24,7 @@ let currentPlayingSound: Audio.Sound | null = null;
 let currentPlayingId: string | null = null;
 
 const MAX_RETRIES = 5;
-const INITIAL_RETRY_DELAY = 500;
+const INITIAL_RETRY_DELAY = 1000;
 
 export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions): UseVoicePlaybackResult {
   const { onPlaybackComplete, onListened } = options || {};
@@ -50,7 +50,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
     };
   }, []);
 
-  const loadAudio = useCallback(async () => {
+  const loadAudio = useCallback(async (isRetry = false) => {
     if (Platform.OS === "web") {
       setState('error');
       return;
@@ -59,6 +59,10 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
     setState('loading');
 
     try {
+      if (isRetry) {
+        await mediaCache.removeCacheEntry(uri);
+      }
+      
       let finalUri = await mediaCache.getCachedUri(uri);
       if (!finalUri) {
         finalUri = await mediaCache.cacheMedia(uri);
@@ -69,7 +73,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
               retryCountRef.current++;
               console.log(`[useVoicePlayback] Retry ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms`);
               retryTimeoutRef.current = setTimeout(() => {
-                if (isMountedRef.current) loadAudio();
+                if (isMountedRef.current) loadAudio(true);
               }, delay);
             } else {
               setState('error');
@@ -123,12 +127,14 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
       if (isMountedRef.current) {
         console.warn("[useVoicePlayback] Error loading audio:", err);
         
+        await mediaCache.removeCacheEntry(uri);
+        
         if (retryCountRef.current < MAX_RETRIES) {
           const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCountRef.current);
           retryCountRef.current++;
           console.log(`[useVoicePlayback] Retry ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms`);
           retryTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) loadAudio();
+            if (isMountedRef.current) loadAudio(true);
           }, delay);
         } else {
           setState('error');
