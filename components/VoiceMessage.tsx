@@ -62,36 +62,29 @@ function WaveformBar({ index, heightRatio, progress, primaryColor, secondaryColo
   );
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: initialListened = false, onListened }: VoiceMessageProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [downloadInfo, setDownloadInfo] = useState<DownloadProgress | null>(null);
+  
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [hasError, setHasError] = useState(false);
-  const [cachedUri, setCachedUri] = useState<string | null>(null);
-  const [audioSource, setAudioSource] = useState<string | null>(null);
-  const [pendingPlay, setPendingPlay] = useState(false);
-  const [hasBeenListened, setHasBeenListened] = useState(initialListened);
+  const [audioUri, setAudioUri] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const wasLoadedRef = useRef(false);
-  const hasFinishedRef = useRef(false);
-  const hasStartedPlayingRef = useRef(false);
+  const [hasBeenListened, setHasBeenListened] = useState(initialListened);
+  
   const playerIdRef = useRef<string>(audioPlayerManager.generatePlayerId());
-  const lastStatusTimeRef = useRef(0);
+  const hasMarkedListenedRef = useRef(false);
   const progress = useSharedValue(0);
 
   useEffect(() => {
     setHasBeenListened(initialListened);
+    if (initialListened) {
+      hasMarkedListenedRef.current = true;
+    }
   }, [initialListened]);
 
-  const player = useAudioPlayer(audioSource);
+  const player = useAudioPlayer(audioUri);
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
@@ -101,34 +94,18 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, [player]);
 
   useEffect(() => {
-    if (player && audioSource) {
-      player.loop = false;
-    }
-  }, [player, audioSource]);
-
-  const isPreloadingRef = useRef(false);
-  useEffect(() => {
     if (Platform.OS === "web") return;
-    if (cachedUri) return;
-    if (isPreloadingRef.current) return;
     
     let mounted = true;
-    isPreloadingRef.current = true;
     
     const preloadAudio = async () => {
       try {
-        const existingCached = await mediaCache.getCachedUri(uri);
-        if (existingCached && mounted) {
-          setCachedUri(existingCached);
-          return;
-        }
-        const cached = await mediaCache.cacheMedia(uri);
-        if (mounted) {
-          setCachedUri(cached);
+        const cached = await mediaCache.getCachedUri(uri);
+        if (cached && mounted) {
+          setAudioUri(cached);
         }
       } catch (error) {
-      } finally {
-        isPreloadingRef.current = false;
+        // Silent fail for preload
       }
     };
     
@@ -137,7 +114,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     return () => {
       mounted = false;
     };
-  }, [uri, cachedUri]);
+  }, [uri]);
 
   const waveformHeights = useMemo(() => {
     return Array.from({ length: WAVEFORM_BARS }, (_, i) => {
@@ -154,27 +131,47 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, []);
 
   useEffect(() => {
-    const isLoaded = status?.isLoaded ?? false;
+    if (!status) return;
     
-    if (pendingPlay && isLoaded && !wasLoadedRef.current) {
-      setPendingPlay(false);
-      player.loop = false;
-      audioPlayerManager.stopCurrent();
-      audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
-        setIsPlaying(false);
-      });
-      hasFinishedRef.current = false;
-      hasStartedPlayingRef.current = false;
-      try {
-        player.play();
+    if (status.isLoaded && status.duration > 0) {
+      const currentProgress = status.currentTime / status.duration;
+      progress.value = currentProgress;
+      
+      if (status.playing) {
         setIsPlaying(true);
-      } catch (error) {
+        
+        if (!hasMarkedListenedRef.current && !hasBeenListened) {
+          hasMarkedListenedRef.current = true;
+          setHasBeenListened(true);
+          if (messageId && onListened) {
+            onListened(messageId);
+          }
+        }
+      }
+      
+      const hasReachedEnd = status.currentTime >= status.duration - 0.15;
+      
+      if (!status.playing && isPlaying) {
         setIsPlaying(false);
+        
+        if (hasReachedEnd) {
+          progress.value = 0;
+          try {
+            player.seekTo(0);
+          } catch (e) {}
+        }
+        
+        audioPlayerManager.unregisterPlayer(playerIdRef.current);
       }
     }
-    
-    wasLoadedRef.current = isLoaded;
-  }, [status?.isLoaded, pendingPlay, player]);
+  }, [status?.currentTime, status?.duration, status?.playing, status?.isLoaded]);
+
+  useEffect(() => {
+    if (!audioPlayerManager.isCurrentPlayer(playerIdRef.current) && isPlaying) {
+      setIsPlaying(false);
+      progress.value = 0;
+    }
+  }, [status?.playing]);
 
   useEffect(() => {
     const playerId = playerIdRef.current;
@@ -183,161 +180,97 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     };
   }, []);
 
-  useEffect(() => {
-    if (!audioPlayerManager.isCurrentPlayer(playerIdRef.current) && isPlaying) {
-      setIsPlaying(false);
-      progress.value = 0;
-    }
-  }, [status?.playing, isPlaying, progress]);
-
-  useEffect(() => {
-    if (status && status.isLoaded && status.duration > 0) {
-      const currentProgress = status.currentTime / status.duration;
-      progress.value = currentProgress;
-
-      if (status.playing && !hasStartedPlayingRef.current) {
-        hasStartedPlayingRef.current = true;
-        setIsPlaying(true);
-        if (!hasBeenListened) {
-          setHasBeenListened(true);
-          if (messageId && onListened) {
-            onListened(messageId);
-          }
-        }
-      }
-
-      if (status.playing) {
-        hasFinishedRef.current = false;
-        lastStatusTimeRef.current = status.currentTime;
-      }
-
-      const hasReachedEnd = status.currentTime >= status.duration - 0.1;
-      const justStopped = !status.playing && hasStartedPlayingRef.current;
-      
-      if (hasReachedEnd && justStopped && !hasFinishedRef.current) {
-        hasFinishedRef.current = true;
-        hasStartedPlayingRef.current = false;
-        setIsPlaying(false);
-        progress.value = 0;
-        
-        try {
-          player.seekTo(0);
-          player.pause();
-        } catch (error) {
-        }
-        audioPlayerManager.unregisterPlayer(playerIdRef.current);
-      }
-
-      if (!status.playing && hasStartedPlayingRef.current && !hasReachedEnd) {
-        const timeSinceLastUpdate = Math.abs(status.currentTime - lastStatusTimeRef.current);
-        if (timeSinceLastUpdate < 0.01 && status.currentTime > 0.5) {
-          hasFinishedRef.current = true;
-          hasStartedPlayingRef.current = false;
-          setIsPlaying(false);
-          progress.value = 0;
-          try {
-            player.seekTo(0);
-            player.pause();
-          } catch (error) {
-          }
-          audioPlayerManager.unregisterPlayer(playerIdRef.current);
-        }
-      }
-    }
-  }, [status?.currentTime, status?.duration, status?.playing, status?.isLoaded, progress, player, hasBeenListened, messageId, onListened]);
-
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const loadAndPlay = useCallback(async () => {
+  const handlePress = useCallback(async () => {
     if (Platform.OS === "web") return;
-
-    if (isLoadingAudio || pendingPlay) {
-      return;
+    if (isDownloading) return;
+    
+    if (hasError) {
+      setHasError(false);
     }
 
-    // If audio is loaded and ready, handle play/pause
-    if (audioSource && status?.isLoaded) {
-      try {
-        if (isPlaying) {
+    if (audioUri && status?.isLoaded) {
+      if (isPlaying) {
+        try {
           player.pause();
           setIsPlaying(false);
           audioPlayerManager.unregisterPlayer(playerIdRef.current);
-        } else {
+        } catch (e) {
+          setIsPlaying(false);
+        }
+      } else {
+        try {
           audioPlayerManager.stopCurrent();
-          player.loop = false;
+          playerIdRef.current = audioPlayerManager.generatePlayerId();
           audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
             setIsPlaying(false);
           });
-          hasFinishedRef.current = false;
-          hasStartedPlayingRef.current = false;
-          if (status.currentTime >= status.duration - 0.1) {
+          
+          if (status.currentTime >= status.duration - 0.15) {
             player.seekTo(0);
           }
+          
           player.play();
           setIsPlaying(true);
-        }
-      } catch (error: any) {
-        setIsPlaying(false);
-        if (error?.message?.includes("Session") || error?.message?.includes("Server was dead")) {
-          setAudioSource(null);
-          setPendingPlay(false);
-          wasLoadedRef.current = false;
+        } catch (error: any) {
+          setIsPlaying(false);
+          if (error?.message?.includes("Session") || error?.message?.includes("dead")) {
+            setAudioUri(null);
+          }
         }
       }
       return;
     }
 
-    if (audioSource && !status?.isLoaded) {
-      setPendingPlay(true);
-      return;
-    }
-
-    // Start loading audio
-    setIsLoadingAudio(true);
-    audioPlayerManager.stopCurrent();
-
-    setAudioModeAsync({
-      allowsRecording: false,
-      playsInSilentMode: true,
-    }).catch(() => {});
+    setIsDownloading(true);
+    setDownloadProgress(null);
+    
+    try {
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+    } catch (e) {}
 
     try {
-      let audioUri = cachedUri;
+      let cachedUri = await mediaCache.getCachedUri(uri);
       
-      if (!audioUri) {
-        const existingCached = await mediaCache.getCachedUri(uri);
-        if (existingCached) {
-          audioUri = existingCached;
-          setCachedUri(audioUri);
-        }
-      }
-      
-      if (!audioUri) {
-        setIsLoading(true);
-        setDownloadInfo(null);
-        audioUri = await mediaCache.cacheMedia(uri, (info) => {
-          setDownloadInfo(info);
+      if (!cachedUri) {
+        cachedUri = await mediaCache.cacheMedia(uri, (info) => {
+          setDownloadProgress(info);
         });
-        setCachedUri(audioUri);
-        setIsLoading(false);
       }
-      playerIdRef.current = audioPlayerManager.generatePlayerId();
-      wasLoadedRef.current = false;
-      hasFinishedRef.current = false;
-      hasStartedPlayingRef.current = false;
-      setAudioSource(audioUri);
-      setPendingPlay(true);
-    } catch (error: any) {
+      
+      if (cachedUri) {
+        playerIdRef.current = audioPlayerManager.generatePlayerId();
+        setAudioUri(cachedUri);
+      } else {
+        setHasError(true);
+      }
+    } catch (error) {
+      console.warn("[VoiceMessage] Download failed:", error);
       setHasError(true);
-      setIsLoading(false);
     } finally {
-      setIsLoadingAudio(false);
+      setIsDownloading(false);
+      setDownloadProgress(null);
     }
-  }, [uri, cachedUri, audioSource, status, player, isPlaying, isLoadingAudio, pendingPlay]);
+  }, [uri, audioUri, status, player, isPlaying, isDownloading, hasError]);
+
+  useEffect(() => {
+    if (audioUri && status?.isLoaded && !isPlaying) {
+      audioPlayerManager.stopCurrent();
+      playerIdRef.current = audioPlayerManager.generatePlayerId();
+      audioPlayerManager.registerPlayer(player, playerIdRef.current, () => {
+        setIsPlaying(false);
+      });
+      
+      try {
+        player.play();
+        setIsPlaying(true);
+      } catch (e) {
+        setIsPlaying(false);
+      }
+    }
+  }, [audioUri, status?.isLoaded]);
 
   const playButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withTiming(isPlaying ? 0.95 : 1, { duration: 150 }) }],
@@ -362,7 +295,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const spinValue = useSharedValue(0);
   
   useEffect(() => {
-    if (isLoading) {
+    if (isDownloading) {
       spinValue.value = withRepeat(
         withTiming(360, { duration: 1000, easing: Easing.linear }),
         -1,
@@ -371,14 +304,20 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
     } else {
       spinValue.value = 0;
     }
-  }, [isLoading, spinValue]);
+  }, [isDownloading]);
 
   const spinAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${spinValue.value}deg` }],
   }));
 
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const renderPlayButtonContent = () => {
-    if (isLoading) {
+    if (isDownloading) {
       return (
         <View style={styles.loadingContainer}>
           <Animated.View style={[styles.spinnerRing, spinAnimatedStyle]}>
@@ -406,7 +345,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   };
   
   const renderDownloadInfo = () => {
-    if (!isLoading || !downloadInfo || downloadInfo.bytesTotal === 0) return null;
+    if (!isDownloading || !downloadProgress || downloadProgress.bytesTotal === 0) return null;
     
     return (
       <View style={styles.downloadInfoContainer}>
@@ -415,7 +354,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
             style={[
               styles.downloadProgressFill, 
               { 
-                width: `${downloadInfo.progress * 100}%`,
+                width: `${downloadProgress.progress * 100}%`,
                 backgroundColor: primaryColor,
               }
             ]} 
@@ -430,7 +369,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={hasError || isLoading ? undefined : loadAndPlay}>
+      <Pressable onPress={handlePress} disabled={hasError && isDownloading}>
         <Animated.View
           style={[
             styles.playButton,
@@ -443,7 +382,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       </Pressable>
 
       <View style={styles.contentContainer}>
-        {isLoading && downloadInfo && downloadInfo.bytesTotal > 0 ? (
+        {isDownloading && downloadProgress && downloadProgress.bytesTotal > 0 ? (
           renderDownloadInfo()
         ) : hasError ? (
           <View style={styles.errorContainer}>
@@ -562,10 +501,6 @@ const styles = StyleSheet.create({
   downloadProgressFill: {
     height: "100%",
     borderRadius: 2,
-  },
-  downloadText: {
-    fontSize: 11,
-    fontWeight: "500",
   },
   errorContainer: {
     flex: 1,

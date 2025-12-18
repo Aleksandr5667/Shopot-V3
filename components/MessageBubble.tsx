@@ -146,26 +146,39 @@ export function MessageBubble({
   const [isMediaLoaded, setIsMediaLoaded] = useState(isAlreadyKnownLoaded);
   const [isCheckingCache, setIsCheckingCache] = useState(!isAlreadyKnownLoaded && !!mediaKey);
   const [isExpanded, setIsExpanded] = useState(false);
-  // null = not yet determined, true = listened, false = not listened
-  const [voiceListenedState, setVoiceListenedState] = useState<boolean | null>(() => {
-    // If service is already initialized, use sync value
+  const [voiceListenedState, setVoiceListenedState] = useState<boolean>(() => {
     if (listenedMessagesService.isInitialized()) {
       return listenedMessagesService.isListened(message.id);
     }
-    return null; // Don't know yet
+    return false;
   });
+  const [isListenedLoading, setIsListenedLoading] = useState(!listenedMessagesService.isInitialized());
   
-  // Check listened status asynchronously
   useEffect(() => {
     if (message.type !== "voice") return;
     
+    let mounted = true;
+    
     listenedMessagesService.isListenedAsync(message.id).then((listened) => {
-      setVoiceListenedState(listened);
+      if (mounted) {
+        setVoiceListenedState(listened);
+        setIsListenedLoading(false);
+      }
     });
+    
+    const unsubscribe = listenedMessagesService.subscribe(message.id, (_, isListened) => {
+      if (mounted) {
+        setVoiceListenedState(isListened);
+      }
+    });
+    
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [message.id, message.type]);
   
-  // For rendering: null means we haven't loaded yet, treat as listened to avoid flash
-  const isVoiceListened = voiceListenedState === null ? true : voiceListenedState;
+  const isVoiceListened = isListenedLoading ? false : voiceListenedState;
   
   const handleVoiceListened = useCallback((messageId: string) => {
     setVoiceListenedState(true);
