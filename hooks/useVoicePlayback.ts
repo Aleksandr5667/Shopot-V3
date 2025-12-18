@@ -23,6 +23,14 @@ interface UseVoicePlaybackResult {
 let currentPlayingSound: Audio.Sound | null = null;
 let currentPlayingId: string | null = null;
 
+type PlaybackListener = (playingId: string | null) => void;
+const playbackListeners = new Set<PlaybackListener>();
+
+function notifyPlaybackChange(playingId: string | null) {
+  currentPlayingId = playingId;
+  playbackListeners.forEach(listener => listener(playingId));
+}
+
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY = 1000;
 
@@ -42,13 +50,23 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
 
   useEffect(() => {
     isMountedRef.current = true;
+    
+    const listener: PlaybackListener = (playingId) => {
+      if (playingId !== playbackIdRef.current && state === 'playing') {
+        setState('idle');
+        setCurrentTime(0);
+      }
+    };
+    playbackListeners.add(listener);
+    
     return () => {
       isMountedRef.current = false;
+      playbackListeners.delete(listener);
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, []);
+  }, [state]);
 
   const loadAudio = useCallback(async (isRetry = false) => {
     if (Platform.OS === "web") {
@@ -108,7 +126,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
               setState('idle');
               setCurrentTime(0);
               currentPlayingSound = null;
-              currentPlayingId = null;
+              notifyPlaybackChange(null);
               onPlaybackComplete?.();
             }
           }
@@ -163,7 +181,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
       }
       if (currentPlayingId === playbackIdRef.current) {
         currentPlayingSound = null;
-        currentPlayingId = null;
+        notifyPlaybackChange(null);
       }
     };
   }, [uri, loadAudio]);
@@ -175,7 +193,6 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
         await currentPlayingSound.setPositionAsync(0);
       } catch (e) {}
       currentPlayingSound = null;
-      currentPlayingId = null;
     }
   }, []);
 
@@ -197,7 +214,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
         await soundRef.current.pauseAsync();
         setState('idle');
         currentPlayingSound = null;
-        currentPlayingId = null;
+        notifyPlaybackChange(null);
       } else {
         await stopOtherPlayers();
         
@@ -209,7 +226,7 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
         await soundRef.current.playAsync();
         setState('playing');
         currentPlayingSound = soundRef.current;
-        currentPlayingId = playbackIdRef.current;
+        notifyPlaybackChange(playbackIdRef.current);
 
         if (!hasCalledListenedRef.current) {
           hasCalledListenedRef.current = true;
@@ -231,17 +248,10 @@ export function useVoicePlayback(uri: string, options?: UseVoicePlaybackOptions)
       setCurrentTime(0);
       if (currentPlayingId === playbackIdRef.current) {
         currentPlayingSound = null;
-        currentPlayingId = null;
+        notifyPlaybackChange(null);
       }
     } catch (e) {}
   }, []);
-
-  useEffect(() => {
-    if (currentPlayingId !== null && currentPlayingId !== playbackIdRef.current && state === 'playing') {
-      setState('idle');
-      setCurrentTime(0);
-    }
-  }, [state]);
 
   return {
     state,
