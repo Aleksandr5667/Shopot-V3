@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, Pressable, Dimensions, Platform, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -477,25 +478,34 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
-                {isMediaOnly && showSenderName ? (
-                  <View style={styles.mediaSenderOverlay}>
-                    <ThemedText type="caption" style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} numberOfLines={1}>
-                      {message.senderName}
-                    </ThemedText>
-                  </View>
-                ) : null}
                 {isMediaOnly ? (
-                  <View style={styles.mediaTimeOverlay}>
-                    {message.isEdited ? (
-                      <ThemedText type="caption" style={styles.mediaTimeText}>
-                        {t("chat.edited")}
-                      </ThemedText>
-                    ) : null}
-                    <ThemedText type="caption" style={styles.mediaTimeText}>
-                      {formatTime(message.timestamp)}
-                    </ThemedText>
-                    <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
-                  </View>
+                  <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.6)"]}
+                    style={styles.mediaGradientOverlay}
+                  >
+                    <View style={styles.mediaOverlayContent}>
+                      {showSenderName ? (
+                        <ThemedText 
+                          type="caption" 
+                          style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} 
+                          numberOfLines={1}
+                        >
+                          {message.senderName}
+                        </ThemedText>
+                      ) : null}
+                      <View style={styles.mediaTimeRow}>
+                        {message.isEdited ? (
+                          <ThemedText type="caption" style={styles.mediaTimeText}>
+                            {t("chat.edited")}
+                          </ThemedText>
+                        ) : null}
+                        <ThemedText type="caption" style={styles.mediaTimeText}>
+                          {formatTime(message.timestamp)}
+                        </ThemedText>
+                        <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
+                      </View>
+                    </View>
+                  </LinearGradient>
                 ) : null}
               </View>
             ) : (
@@ -530,25 +540,34 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
-                {isMediaOnly && showSenderName ? (
-                  <View style={styles.mediaSenderOverlay}>
-                    <ThemedText type="caption" style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} numberOfLines={1}>
-                      {message.senderName}
-                    </ThemedText>
-                  </View>
-                ) : null}
                 {isMediaOnly ? (
-                  <View style={styles.mediaTimeOverlay}>
-                    {message.isEdited ? (
-                      <ThemedText type="caption" style={styles.mediaTimeText}>
-                        {t("chat.edited")}
-                      </ThemedText>
-                    ) : null}
-                    <ThemedText type="caption" style={styles.mediaTimeText}>
-                      {formatTime(message.timestamp)}
-                    </ThemedText>
-                    <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
-                  </View>
+                  <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.6)"]}
+                    style={styles.mediaGradientOverlay}
+                  >
+                    <View style={styles.mediaOverlayContent}>
+                      {showSenderName ? (
+                        <ThemedText 
+                          type="caption" 
+                          style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} 
+                          numberOfLines={1}
+                        >
+                          {message.senderName}
+                        </ThemedText>
+                      ) : null}
+                      <View style={styles.mediaTimeRow}>
+                        {message.isEdited ? (
+                          <ThemedText type="caption" style={styles.mediaTimeText}>
+                            {t("chat.edited")}
+                          </ThemedText>
+                        ) : null}
+                        <ThemedText type="caption" style={styles.mediaTimeText}>
+                          {formatTime(message.timestamp)}
+                        </ThemedText>
+                        <MessageStatus status={message.status} isOutgoing={isOwn} isEmojiOnly={false} />
+                      </View>
+                    </View>
+                  </LinearGradient>
                 ) : null}
               </View>
             )}
@@ -847,22 +866,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  mediaTimeOverlay: {
+  mediaGradientOverlay: {
     position: "absolute",
-    bottom: 8,
-    right: 8,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    justifyContent: "flex-end",
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  },
+  mediaOverlayContent: {
+    flexDirection: "column",
+    gap: 2,
+  },
+  mediaTimeRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
     gap: 4,
   },
   mediaTimeText: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "500",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   mediaOnlyBubble: {
     backgroundColor: "transparent",
@@ -870,18 +901,11 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
   },
-  mediaSenderOverlay: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    maxWidth: "70%",
-  },
   mediaSenderText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
