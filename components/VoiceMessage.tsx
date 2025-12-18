@@ -76,6 +76,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const playerIdRef = useRef<string>(audioPlayerManager.generatePlayerId());
   const hasMarkedListenedRef = useRef(false);
   const shouldAutoPlayRef = useRef(false);
+  const isLoadedRef = useRef(false);
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
+    isLoadedRef.current = !!status?.isLoaded;
     console.log("[VoiceMessage] Player/status changed", { 
       hasPlayer: !!player, 
       audioUri: audioUri?.substring(0, 50),
@@ -192,7 +194,8 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
   }, []);
 
   const handlePress = useCallback(async () => {
-    console.log("[VoiceMessage] handlePress called", { platform: Platform.OS, isDownloading, hasError, audioUri: !!audioUri, isLoaded: status?.isLoaded });
+    const currentIsLoaded = isLoadedRef.current;
+    console.log("[VoiceMessage] handlePress called", { platform: Platform.OS, isDownloading, hasError, audioUri: !!audioUri, isLoaded: currentIsLoaded });
     
     if (Platform.OS === "web") {
       console.log("[VoiceMessage] Blocked on web");
@@ -207,7 +210,7 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
       setHasError(false);
     }
 
-    if (audioUri && status?.isLoaded) {
+    if (audioUri && currentIsLoaded) {
       if (isPlaying) {
         try {
           player.pause();
