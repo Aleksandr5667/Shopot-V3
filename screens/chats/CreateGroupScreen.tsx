@@ -14,6 +14,7 @@ import { useChatsContext } from "@/contexts/ChatsContext";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 import { ChatsStackParamList } from "@/navigation/types";
 import { Contact } from "@/store/types";
+import { welcomeChatService } from "@/services/welcomeChat";
 
 type NavigationProp = NativeStackNavigationProp<ChatsStackParamList, "CreateGroup">;
 
@@ -147,6 +148,7 @@ export function CreateGroupScreen() {
     const seenIds = new Set<string>();
 
     chats.forEach((chat) => {
+      if (welcomeChatService.isWelcomeChat(chat.id)) return;
       if (!chat.isGroup && chat.participant) {
         const id = chat.participant.visibleId?.toString() || chat.participant.id;
         if (!seenIds.has(id)) {

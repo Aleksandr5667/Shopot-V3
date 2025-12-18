@@ -26,6 +26,7 @@ import { apiService } from "@/services/api";
 import { Spacing, BorderRadius, CardStyles } from "@/constants/theme";
 import { ChatsStackParamList } from "@/navigation/types";
 import { Contact } from "@/store/types";
+import { welcomeChatService } from "@/services/welcomeChat";
 
 type NavigationProp = NativeStackNavigationProp<ChatsStackParamList, "AddGroupMembers">;
 type AddMembersRouteProp = RouteProp<ChatsStackParamList, "AddGroupMembers">;
@@ -67,6 +68,7 @@ export function AddGroupMembersScreen() {
     const seenIds = new Set<number>();
 
     chats.forEach((chat) => {
+      if (welcomeChatService.isWelcomeChat(chat.id)) return;
       if (!chat.isGroup && chat.participant) {
         const visibleId = chat.participant.visibleId || parseInt(chat.participant.id, 10);
         if (!seenIds.has(visibleId) && !existingMemberIds.includes(visibleId)) {
