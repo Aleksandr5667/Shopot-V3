@@ -1,10 +1,9 @@
 import React, { useEffect, useCallback } from "react";
-import { View, StyleSheet, Image, Platform, Pressable } from "react-native";
+import { View, StyleSheet, Image, Pressable } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -78,20 +77,17 @@ function GlassButton({
       ]}
     >
       {!isPrimary ? (
-        Platform.OS === "ios" ? (
-          <BlurView
-            intensity={intensity}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : (
-          <View 
-            style={[
-              StyleSheet.absoluteFill, 
-              { backgroundColor: isDark ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }
-            ]} 
-          />
-        )
+        <View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { 
+              backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.85)",
+              borderWidth: 1.5,
+              borderColor: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.08)",
+              borderRadius: BorderRadius.lg,
+            }
+          ]} 
+        />
       ) : null}
       <ThemedText 
         type="body" 
