@@ -316,7 +316,7 @@ export function MessageBubble({
   const showSenderName = isGroup && !isOwn && message.senderName;
   
   // Media-only message: has image/video but no text (excluding audio)
-  const isMediaOnly = hasMedia && !isAudio && !message.text && !message.replyToMessage && !showSenderName;
+  const isMediaOnly = hasMedia && !isAudio && !message.text && !message.replyToMessage;
 
   const renderBubbleContent = () => {
     const bubbleRadius = 22;
@@ -347,7 +347,7 @@ export function MessageBubble({
 
     const innerContent = (
       <>
-        {showSenderName ? (
+        {showSenderName && !isMediaOnly ? (
           <ThemedText 
             style={[
               styles.senderName, 
@@ -458,6 +458,13 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
+                {isMediaOnly && showSenderName ? (
+                  <View style={styles.mediaSenderOverlay}>
+                    <ThemedText type="caption" style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} numberOfLines={1}>
+                      {message.senderName}
+                    </ThemedText>
+                  </View>
+                ) : null}
                 {isMediaOnly ? (
                   <View style={styles.mediaTimeOverlay}>
                     {message.isEdited ? (
@@ -503,6 +510,13 @@ export function MessageBubble({
                     <ThemedText style={styles.loadMediaText}>{t("chat.tapToLoad")}</ThemedText>
                   </View>
                 )}
+                {isMediaOnly && showSenderName ? (
+                  <View style={styles.mediaSenderOverlay}>
+                    <ThemedText type="caption" style={[styles.mediaSenderText, { color: message.senderColor || "#FFFFFF" }]} numberOfLines={1}>
+                      {message.senderName}
+                    </ThemedText>
+                  </View>
+                ) : null}
                 {isMediaOnly ? (
                   <View style={styles.mediaTimeOverlay}>
                     {message.isEdited ? (
@@ -835,5 +849,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: 0,
     paddingBottom: 0,
+  },
+  mediaSenderOverlay: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    maxWidth: "70%",
+  },
+  mediaSenderText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
 });
