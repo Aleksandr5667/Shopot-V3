@@ -285,9 +285,16 @@ export function VoiceMessage({ uri, duration, isOwn, messageId, isListened: init
           player.play();
           setIsPlaying(true);
         }
-      } catch (error) {
-        console.warn("[VoiceMessage] Playback control failed:", error);
+      } catch (error: any) {
+        console.warn("[VoiceMessage] Playback control failed:", error?.message);
         setIsPlaying(false);
+        // Reset player on session errors to allow reload
+        if (error?.message?.includes("Session") || error?.message?.includes("Server was dead")) {
+          console.log("[VoiceMessage] Resetting audio source due to session error");
+          setAudioSource(null);
+          setPendingPlay(false);
+          wasLoadedRef.current = false;
+        }
       }
       return;
     }
